@@ -1,0 +1,311 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Descargar Inventario | Inventario Chomin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Descargar de Inventario</h1>
+        <p>Registra salidas de bodega por venta o servicio técnico y consulta el historial completo.</p>
+    </div>
+</div>
+
+<!-- Datalist global con todos los repuestos activos para búsqueda rápida -->
+<datalist id="catalogoRepuestos">
+    {% for prod in productos %}
+    <option value="{{ prod.nombre }}" data-id="{{ prod.id }}" data-precio="{{ prod.precio|stringformat:'.2f' }}" data-stock="{{ prod.cantidad }}">
+        Stock: {{ prod.cantidad }} uds. | Q {{ prod.precio }}
+    </option>
+    {% endfor %}
+</datalist>
+
+<!-- Catálogo de clientes para búsqueda instantánea -->
+<datalist id="catalogoClientes">
+    {% for c in clientes %}
+    <option value="{{ c.nombre }} ({{ c.telefono }})" data-id="{{ c.id }}" data-dir="{{ c.direccion }}">
+        {{ c.direccion }}
+    </option>
+    {% endfor %}
+</datalist>
+
+<div class="card">
+    <h2 class="card-title">Nueva Salida de Bodega</h2>
+    <form method="POST" id="descargaForm">
+        {% csrf_token %}
+
+        <!-- Fila 1: Motivo y Referencia -->
+        <div class="form-grid cols-2" style="margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="motivo">Motivo de salida *</label>
+                <select id="motivo" name="motivo" class="form-control" required>
+                    <option value="venta">Venta directa en mostrador</option>
+                    <option value="tecnico">Uso en servicio técnico</option>
+                    <option value="garantia">Cambio por garantía</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="nota_salida">Referencia / Técnico responsable</label>
+                <input type="text" id="nota_salida" name="nota_salida" class="form-control" placeholder="Ej. Orden #104 - Reparación cuarto frío">
+            </div>
+        </div>
+
+        <!-- Fila 2: Cliente (Registrado o No Registrado) -->
+        <div class="form-grid cols-2" style="margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--slate-200);">
+            <div class="form-group">
+                <label for="buscar_cliente_descarga">Cliente registrado (Opcional)</label>
+                <input type="text"
+                       id="buscar_cliente_descarga"
+                       list="catalogoClientes"
+                       class="form-control input-buscar-cliente"
+                       data-hidden-target="cliente_id"
+                       data-hint-target="cliente_descarga_hint"
+                       data-manual-toggle="grupoClienteManual"
+                       placeholder="Buscar cliente registrado o dejar vacío..."
+                       autocomplete="off">
+                <input type="hidden" name="cliente_id" id="cliente_id">
+                <small id="cliente_descarga_hint" style="font-size: 0.78rem; color: var(--slate-600); min-height: 1rem;"></small>
+            </div>
+
+            <div class="form-group" id="grupoClienteManual">
+                <label for="cliente_nombre">Nombre si no está registrado (Opcional)</label>
+                <input type="text" id="cliente_nombre" name="cliente_nombre" class="form-control" placeholder="Ej. Juan Pérez / Taller Central">
+            </div>
+        </div>
+
+        <!-- Selección dinámica de repuestos con buscador -->
+        <h3 class="card-title">Repuestos a descontar</h3>
+        <div id="listaDescarga" style="display: flex; flex-direction: column; gap: 0.85rem;">
+            <div class="item-row" style="background: var(--bg-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+                <div class="form-grid cols-3" style="align-items: end;">
+                    <div class="form-group">
+                        <label>Buscar repuesto *</label>
+                        <input type="text" list="catalogoRepuestos" class="form-control input-buscar-repuesto" placeholder="Escribe nombre, HP, gas..." autocomplete="off" required>
+                        <input type="hidden" name="producto_id[]" class="hidden-producto-id">
+                        <small class="stock-hint" style="color: var(--slate-600); font-size: 0.78rem; min-height: 1rem;"></small>
+                    </div>
+
+                    <div class="form-grid cols-2">
+                        <div class="form-group">
+                            <label>Cantidad *</label>
+                            <input type="number" name="cantidad[]" class="form-control input-cant-descarga" min="1" value="1" required>
+                            <small style="min-height: 1rem;"></small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Subtotal</label>
+                            <div class="form-control subtotal-display" style="display: flex; align-items: center; font-weight: 700; color: var(--primary); background: var(--white);">
+                                Q 0.00
+                            </div>
+                            <small style="min-height: 1rem;"></small>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="justify-content: flex-end;">
+                        <button type="button" class="btn btn-danger-soft btn-remove-row">Quitar fila</button>
+                        <small style="min-height: 1rem;"></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <button type="button" id="btnAgregarDescarga" class="btn btn-secondary">+ Agregar otro repuesto</button>
+        </div>
+
+        <!-- Resumen financiero de la descarga -->
+        <div class="summary-box">
+            <div>
+                <span style="font-size: 0.85rem; color: var(--slate-600); display: block;">Costo Total Descontado</span>
+                <strong style="font-size: 0.9rem;">Calculado según precio unitario vigente</strong>
+            </div>
+            <div class="summary-total" id="totalDescarga">Q 0.00</div>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary">Confirmar Descarga de Stock</button>
+        </div>
+    </form>
+</div>
+
+<!-- HISTORIAL DE DESCARGAS -->
+<div class="card">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem;">
+        <div>
+            <h2 class="card-title" style="margin-bottom: 0.15rem;">Historial de Descargas de Inventario</h2>
+            <p style="font-size: 0.85rem; color: var(--slate-600);">Registro auditado de salidas, destinatarios y montos descontados.</p>
+        </div>
+        <div class="search-bar-wrapper" style="margin-bottom: 0; width: 100%; max-width: 340px;">
+            <svg class="search-bar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="search" class="form-control search-bar-input" data-table-filter="tablaHistorialDescargas" placeholder="Buscar repuesto, cliente, motivo...">
+            <button type="button" class="search-clear-btn" aria-label="Limpiar búsqueda">&times;</button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="tablaHistorialDescargas">
+            <thead>
+                <tr>
+                    <th>Salida</th>
+                    <th>Fecha</th>
+                    <th>Motivo</th>
+                    <th>Cliente / Destino</th>
+                    <th>Repuestos Descontados</th>
+                    <th>Costo Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in historial %}
+                <tr>
+                    <td><strong>#{{ d.id|stringformat:"04d" }}</strong></td>
+                    <td>{{ d.fecha|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <span class="badge {% if d.motivo == 'venta' %}badge-success{% elif d.motivo == 'tecnico' %}badge-info{% else %}badge-warning{% endif %}">
+                            {{ d.get_motivo_display }}
+                        </span>
+                    </td>
+                   <td>
+                        {% if d.cliente %}
+                            <a href="{% url 'perfil_cliente' d.cliente.id %}" style="color: var(--primary); font-weight: 600; text-decoration: none;">
+                                {{ d.cliente.nombre }}
+                            </a>
+                        {% else %}
+                            <strong>{{ d.nombre_destinatario }}</strong>
+                        {% endif %}
+
+                        {% if d.servicio_tecnico %}
+                            <div style="margin-top: 0.3rem;">
+                                <button type="button"
+                                        class="btn btn-secondary btn-sm"
+                                        style="min-height: 28px; padding: 0.15rem 0.6rem; font-size: 0.76rem; color: var(--primary-hover); border-color: #bae6fd; background: var(--primary-light);"
+                                        data-open-modal="modalOrdenDetalle{{ d.servicio_tecnico.id }}">
+                                    Orden #{{ d.servicio_tecnico.id }} &bull; {{ d.servicio_tecnico.equipo|truncatechars:22 }}
+                                </button>
+                            </div>
+                        {% elif d.nota_salida %}
+                            <small style="display: block; color: var(--slate-600);">{{ d.nota_salida }}</small>
+                        {% elif d.cliente %}
+                            <small style="display: block; color: var(--slate-400);">Cliente registrado</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem;">
+                            {% for item in d.detalles.all %}
+                            <li>
+                                <strong>{{ item.cantidad }}x</strong> {{ item.producto.nombre }}
+                                <span style="color: var(--slate-600);">(Q {{ item.precio_unitario }} c/u &rarr; Q {{ item.subtotal }})</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td><strong style="color: var(--dark-navy); font-size: 0.98rem;">Q {{ d.total_descontado }}</strong></td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="6" style="text-align: center; color: var(--slate-400);">Aún no se han registrado descargas de inventario.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODALES DE DETALLE DE ORDEN DE SERVICIO TÉCNICO -->
+{% for d in historial %}
+    {% if d.servicio_tecnico %}
+        {% with srv=d.servicio_tecnico %}
+        <div id="modalOrdenDetalle{{ srv.id }}" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+            <div class="modal-box" style="max-width: 640px;">
+                <div class="modal-header">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <h2 class="card-title" style="margin-bottom: 0;">Orden Técnica #{{ srv.id }}</h2>
+                            <span class="badge {% if srv.estado == 'completado' %}badge-success{% elif srv.estado == 'en_proceso' %}badge-info{% else %}badge-warning{% endif %}">
+                                {{ srv.get_estado_display }}
+                            </span>
+                        </div>
+                        <small style="color: var(--slate-600);">
+                            Cliente: <strong>{{ srv.cliente.nombre }}</strong> ({{ srv.cliente.telefono }})
+                        </small>
+                    </div>
+                    <button type="button" class="modal-close-btn" data-close-modal="modalOrdenDetalle{{ srv.id }}">&times;</button>
+                </div>
+
+                <!-- Ficha técnica del equipo y falla -->
+                <div style="background: var(--bg-surface); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 0.95rem; margin-bottom: 1rem;">
+                    <div class="form-grid cols-2" style="gap: 0.75rem;">
+                        <div>
+                            <small style="color: var(--slate-600); font-weight: 600; text-transform: uppercase; font-size: 0.72rem;">Equipo intervenido</small>
+                            <div style="font-weight: 700; color: var(--dark-navy); margin-top: 0.15rem;">{{ srv.equipo }}</div>
+                        </div>
+                        <div>
+                            <small style="color: var(--slate-600); font-weight: 600; text-transform: uppercase; font-size: 0.72rem;">Fechas</small>
+                            <div style="font-size: 0.85rem; margin-top: 0.15rem;">
+                                Ingreso: <strong>{{ srv.fecha_solicitud|date:"d/m/Y" }}</strong>
+                                {% if srv.fecha_cierre %} &bull; Cierre: <strong style="color: var(--success);">{{ srv.fecha_cierre|date:"d/m/Y" }}</strong>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--slate-200);">
+                        <small style="color: var(--slate-600); font-weight: 600; text-transform: uppercase; font-size: 0.72rem;">Falla reportada / Diagnóstico</small>
+                        <p style="font-size: 0.9rem; color: var(--slate-800); margin-top: 0.2rem;">{{ srv.descripcion_falla }}</p>
+                    </div>
+
+                    {% if srv.detalle_mano_obra %}
+                    <div style="margin-top: 0.65rem;">
+                        <small style="color: var(--slate-600); font-weight: 600; text-transform: uppercase; font-size: 0.72rem;">Trabajo técnico realizado</small>
+                        <p style="font-size: 0.9rem; color: var(--primary-hover); font-weight: 500; margin-top: 0.2rem;">{{ srv.detalle_mano_obra }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Desglose económico completo de la orden -->
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.5rem;">
+                    Repuestos y Mano de Obra de esta Orden
+                </div>
+                <div class="table-responsive" style="margin-bottom: 1rem;">
+                    <table style="font-size: 0.86rem;">
+                        <thead>
+                            <tr>
+                                <th>Concepto</th>
+                                <th>Salida</th>
+                                <th style="text-align: right;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for desc in srv.descargas_repuestos.all %}
+                                {% for item in desc.detalles.all %}
+                                <tr>
+                                    <td><strong>{{ item.cantidad }}x</strong> {{ item.producto.nombre }}</td>
+                                    <td>#{{ desc.id|stringformat:"04d" }}</td>
+                                    <td style="text-align: right;">Q {{ item.subtotal }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% endfor %}
+                            {% if srv.costo_mano_obra > 0 %}
+                            <tr style="background: var(--primary-light);">
+                                <td colspan="2"><strong>Mano de obra técnica</strong></td>
+                                <td style="text-align: right;"><strong>Q {{ srv.costo_mano_obra }}</strong></td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="summary-box" style="margin-top: 0; padding: 0.75rem 1rem;">
+                    <strong>Total Reparación</strong>
+                    <span class="summary-total" style="font-size: 1.15rem;">Q {{ srv.total_reparacion|floatformat:2 }}</span>
+                </div>
+
+                <div style="margin-top: 1.15rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.65rem;">
+                    <a href="{% url 'perfil_cliente' srv.cliente.id %}" class="btn btn-secondary btn-sm">Ir al expediente del cliente</a>
+                    <button type="button" class="btn btn-primary btn-sm" data-close-modal="modalOrdenDetalle{{ srv.id }}">Cerrar</button>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+    {% endif %}
+{% endfor %}
+{% endblock %}

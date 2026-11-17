@@ -1,0 +1,182 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Perfil de {{ cliente.nombre }} | Inventario Chomin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ cliente.nombre }}</h1>
+        <p>{{ cliente.telefono }} &bull; {{ cliente.direccion }}</p>
+    </div>
+    <a href="{% url 'clientes' %}" class="btn btn-secondary">Volver a Clientes</a>
+</div>
+
+<!-- Catálogo para búsqueda rápida de repuestos en reparación -->
+<datalist id="catalogoServicioRepuestos">
+    {% for prod in productos %}
+    <option value="{{ prod.nombre }}"
+            data-id="{{ prod.id }}"
+            data-precio="{{ prod.precio|stringformat:'.2f' }}"
+            data-stock="{{ prod.cantidad }}">
+        Stock: {{ prod.cantidad }} uds. | Q {{ prod.precio }}
+    </option>
+    {% endfor %}
+</datalist>
+
+<!-- 1. Cotizaciones Realizadas -->
+<div class="card">
+    <h2 class="card-title">Cotizaciones Realizadas ({{ cotizaciones.count }})</h2>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>N.º Cotización</th>
+                    <th>Fecha</th>
+                    <th>Validez</th>
+                    <th>Total</th>
+                    <th>PDF</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cot in cotizaciones %}
+                <tr>
+                    <td><strong>COT-{{ cot.id|stringformat:"04d" }}</strong></td>
+                    <td>{{ cot.fecha|date:"d/m/Y H:i" }}</td>
+                    <td>{{ cot.validez }}</td>
+                    <td><span class="badge badge-info">Q {{ cot.total }}</span></td>
+                    <td>
+                        <a href="{% url 'descargar_cotizacion_pdf' cot.id %}" class="btn btn-primary btn-sm">Descargar PDF</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--slate-400);">Este cliente aún no tiene cotizaciones registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 2. Historial de Servicio Técnico con Carga de Repuestos -->
+<div class="card">
+    <h2 class="card-title">Historial de Servicio Técnico ({{ servicios.count }})</h2>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for srv in servicios %}
+        <div style="border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-surface);">
+            <!-- Cabecera de la orden -->
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.75rem;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <strong style="font-size: 1.05rem;">Orden #{{ srv.id }} &bull; {{ srv.equipo }}</strong>
+                        <span class="badge {% if srv.estado == 'completado' %}badge-success{% elif srv.estado == 'en_proceso' %}badge-info{% else %}badge-warning{% endif %}">
+                            {{ srv.get_estado_display }}
+                        </span>
+                    </div>
+                    <p style="font-size: 0.88rem; color: var(--slate-700); margin-top: 0.35rem;">
+                        <strong>Falla:</strong> {{ srv.descripcion_falla }}
+                    </p>
+                    <small style="color: var(--slate-600);">
+                        Ingreso: {{ srv.fecha_solicitud|date:"d/m/Y" }}
+                        {% if srv.fecha_cierre %} &bull; <span style="color: var(--success); font-weight: 600;">Cerrado: {{ srv.fecha_cierre|date:"d/m/Y" }}</span>{% endif %}
+                    </small>
+                </div>
+
+                <!-- Controles rápidos: Cargar Repuestos + Cambiar Estado -->
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                    <button type="button" class="btn btn-primary btn-sm" data-toggle-srv="panelRepuestosSrv{{ srv.id }}">
+                        + Cargar Repuestos
+                    </button>
+                    <a href="{% url 'descargar_constancia_servicio_pdf' srv.id %}" class="btn btn-secondary btn-sm">
+                        Constancia PDF
+                    </a>
+
+                    <form method="POST" action="{% url 'actualizar_estado_servicio' srv.id %}" style="min-width: 185px;">
+                        {% csrf_token %}
+                        <select name="estado" class="form-control" style="min-height: 36px; padding: 0.3rem 0.65rem; font-size: 0.85rem;" onchange="this.form.submit()">
+                            <option value="pendiente" {% if srv.estado == 'pendiente' %}selected{% endif %}>Pendiente de revisión</option>
+                            <option value="en_proceso" {% if srv.estado == 'en_proceso' %}selected{% endif %}>En reparación</option>
+                            <option value="completado" {% if srv.estado == 'completado' %}selected{% endif %}>Completado / Entregado</option>
+                            <option value="cancelado" {% if srv.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Repuestos ya utilizados en esta orden (vinculados a DescargaInventario) -->
+            {% if srv.descargas_repuestos.all %}
+            <div style="margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--slate-200);">
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-600); text-transform: uppercase; margin-bottom: 0.4rem;">
+                    Repuestos utilizados (Descontados de inventario):
+                </div>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.88rem;">
+                    {% for desc in srv.descargas_repuestos.all %}
+                        {% for item in desc.detalles.all %}
+                        <li style="display: flex; justify-content: space-between; align-items: center; background: var(--white); padding: 0.45rem 0.75rem; border-radius: 8px; border: 1px solid var(--slate-200);">
+                            <span>
+                                <strong>{{ item.cantidad }}x</strong> {{ item.producto.nombre }}
+                                <small style="color: var(--slate-400);">(Salida #{{ desc.id|stringformat:"04d" }} &bull; {{ desc.fecha|date:"d/m/Y" }})</small>
+                            </span>
+                            <strong style="color: var(--primary);">Q {{ item.subtotal }}</strong>
+                        </li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Panel Desplegable para Cargar Repuestos a esta Reparación -->
+            <div id="panelRepuestosSrv{{ srv.id }}" class="hidden" style="margin-top: 1rem; padding: 1rem; background: var(--white); border-radius: var(--radius-md); border: 1.5px solid var(--primary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <strong style="color: var(--primary); font-size: 0.95rem;">Descontar repuestos para Orden #{{ srv.id }}</strong>
+                    <button type="button" class="btn btn-secondary btn-sm" data-toggle-srv="panelRepuestosSrv{{ srv.id }}">Cerrar</button>
+                </div>
+
+                <form method="POST" action="{% url 'cargar_repuestos_servicio' srv.id %}" class="srv-repuestos-form">
+                    {% csrf_token %}
+                    <div class="srv-lista-repuestos" style="display: flex; flex-direction: column; gap: 0.65rem;">
+                        <div class="srv-item-row form-grid cols-3" style="align-items: end; background: var(--bg-surface); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--slate-200);">
+                            <div class="form-group">
+                                <label>Buscar repuesto *</label>
+                                <input type="text" list="catalogoServicioRepuestos" class="form-control srv-input-buscar" placeholder="Escribe nombre del repuesto..." autocomplete="off" required>
+                                <input type="hidden" name="producto_id[]" class="srv-hidden-id">
+                                <small class="srv-stock-hint" style="font-size: 0.76rem; min-height: 1rem;"></small>
+                            </div>
+
+                            <div class="form-grid cols-2">
+                                <div class="form-group">
+                                    <label>Cantidad *</label>
+                                    <input type="number" name="cantidad[]" class="form-control srv-input-cant" min="1" value="1" required>
+                                    <small style="min-height: 1rem;"></small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Costo</label>
+                                    <div class="form-control srv-subtotal-display" style="display: flex; align-items: center; font-weight: 700; color: var(--primary); background: var(--white);">
+                                        Q 0.00
+                                    </div>
+                                    <small style="min-height: 1rem;"></small>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="justify-content: flex-end;">
+                                <button type="button" class="btn btn-danger-soft btn-sm srv-btn-remove">Quitar</button>
+                                <small style="min-height: 1rem;"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 0.85rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem;">
+                        <button type="button" class="btn btn-secondary btn-sm srv-btn-add">+ Agregar otro repuesto</button>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <strong style="font-size: 0.95rem;">Total: <span class="srv-total-display" style="color: var(--primary);">Q 0.00</span></strong>
+                            <button type="submit" class="btn btn-primary btn-sm">Descontar y Guardar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <p style="text-align: center; color: var(--slate-400); padding: 1rem;">No hay solicitudes de servicio técnico para este cliente.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

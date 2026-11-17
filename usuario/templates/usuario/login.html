@@ -1,0 +1,158 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso al Sistema | Inventario Chomin</title>
+    <!-- Tipografía moderna y legible -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Vincular con tus archivos estáticos de Django ({% load static %}) -->
+
+    <link rel="stylesheet" href="{% static 'login.css' %}">
+    <script src="{% static 'login.js' %}"></script>
+</head>
+<body>
+    <main class="login-wrapper">
+        <!-- Panel Izquierdo: Identidad Visual (Visible en PC/Tablet, compacto en móvil) -->
+        <section class="brand-panel" aria-hidden="true">
+            <div class="brand-content">
+                <div class="brand-badge">
+                    <!-- Ícono vectorial técnico (Copo / Engranaje refrigeración) -->
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="2" x2="12" y2="22"></line>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path d="m20 16-4-4 4-4"></path>
+                        <path d="m4 8 4 4-4 4"></path>
+                        <path d="m16 4-4 4-4-4"></path>
+                        <path d="m8 20 4-4 4 4"></path>
+                    </svg>
+                </div>
+                <h1>Inventario Chomin</h1>
+                <p>Control de existencias, trazabilidad de componentes y gestión de repuestos de refrigeración.</p>
+                
+                <div class="feature-pills">
+                    <span>Stock en tiempo real</span>
+                    <span>Control de bodega</span>
+                    <span>Entradas y salidas</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel Derecho: Formulario de Acceso -->
+        <section class="form-panel">
+            <div class="form-container">
+                <header class="form-header">
+                    <div class="mobile-logo">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="2" x2="12" y2="22"></line>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="m20 16-4-4 4-4"></path>
+                            <path d="m4 8 4 4-4 4"></path>
+                            <path d="m16 4-4 4-4-4"></path>
+                            <path d="m8 20 4-4 4 4"></path>
+                        </svg>
+                        <span>Inventario Chomin</span>
+                    </div>
+                    <h2>Iniciar sesión</h2>
+                    <p class="subtitle">Ingresa tus credenciales para gestionar el almacén.</p>
+                </header>
+
+                <!-- Bloque de mensajes de error de Django -->
+                {% if form.errors %}
+                <div class="alert alert-error" role="alert">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>Usuario o contraseña incorrectos. Verifica tus datos.</span>
+                </div>
+                {% endif %}
+
+                <form id="loginForm" method="POST" action="" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Campo Usuario -->
+                    <div class="input-group">
+                        <label for="username">Usuario o correo</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                name="username" 
+                                placeholder="Ej. mguite" 
+                                autocomplete="username" 
+                                required 
+                                autofocus
+                            >
+                        </div>
+                        <small class="error-text" id="usernameError"></small>
+                    </div>
+
+                    <!-- Campo Contraseña -->
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label for="password">Contraseña</label>
+                        </div>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                placeholder="••••••••" 
+                                autocomplete="current-password" 
+                                required
+                            >
+                            <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar contraseña">
+                                <!-- Ícono Ojo Abierto -->
+                                <svg id="eyeOpen" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <!-- Ícono Ojo Tachado -->
+                                <svg id="eyeClosed" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <small class="error-text" id="passwordError"></small>
+                    </div>
+
+                    <!-- Recordar sesión -->
+                    <div class="form-options">
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="remember_me" id="rememberMe">
+                            <span class="checkmark"></span>
+                            <span>Mantener sesión iniciada</span>
+                        </label>
+                    </div>
+
+                    <!-- Botón Submit -->
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        <span class="btn-text">Ingresar al sistema</span>
+                        <span class="spinner hidden" id="btnSpinner"></span>
+                    </button>
+                </form>
+
+                <footer class="form-footer">
+                    <p>Sistema de Gestión de Repuestos &bull; v1.0</p>
+                </footer>
+            </div>
+        </section>
+    </main>
+
+    <script src="login.js"></script>
+</body>
+</html>
