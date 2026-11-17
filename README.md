@@ -39,7 +39,7 @@ InventarioChomin/
 ├── manage.py
 ├── requirements.txt
 └── .gitignore
-git clone [https://github.com/tu-usuario/inventario-chomin.git](https://github.com/tu-usuario/inventario-chomin.git)
+git clone https://github.com/MelvinGTE/InventarioRefrigeracion.git
 cd inventario-chomin
 python -m venv venv
 # En Windows (Git Bash):
