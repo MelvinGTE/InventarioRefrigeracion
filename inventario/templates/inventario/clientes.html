@@ -99,18 +99,40 @@
                     </div>
 
                     <!-- Acciones directas sobre la orden -->
+                    <!-- Acciones directas sobre la orden -->
                     <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle-srv="panelRepuestosSrv{{ srv.id }}">
-                            + Repuestos / Mano de Obra
-                        </button>
-                        <a href="{% url 'descargar_constancia_servicio_pdf' srv.id %}" target="_blank" class="btn btn-secondary btn-sm">
-                            Descargar Constancia PDF
-                        </a>
-                        
-                        <form method="POST" action="{% url 'actualizar_estado_servicio' srv.id %}" style="min-width: 185px;">
+                        {% if srv.cotizacion %}
+                            {% if srv.cotizacion.estado == 'pendiente' %}
+                                <a href="{% url 'cotizar_orden_servicio' srv.id %}" class="btn btn-secondary btn-sm">
+                                    Editar COT-{{ srv.cotizacion.id|stringformat:"04d" }} (Q {{ srv.cotizacion.total }})
+                                </a>
+                                <form method="POST" action="{% url 'aprobar_cotizacion_orden' srv.cotizacion.id %}"
+                                      onsubmit="return confirm('¿Aprobar COT-{{ srv.cotizacion.id|stringformat:"04d" }}? Se descontarán los repuestos de bodega y se iniciará la reparación.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary btn-sm" style="background: var(--success);">
+                                        Aprobar Cotización
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="badge badge-success">COT-{{ srv.cotizacion.id|stringformat:"04d" }} Aprobada</span>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'cotizar_orden_servicio' srv.id %}" class="btn btn-primary btn-sm">
+                                Cotizar Orden
+                            </a>
+                        {% endif %}
+
+                        {% if srv.estado == 'completado' %}
+                            <a href="{% url 'descargar_constancia_servicio_pdf' srv.id %}" target="_blank" class="btn btn-secondary btn-sm">
+                                Descargar Constancia PDF
+                            </a>
+                        {% endif %}
+
+                        <form method="POST" action="{% url 'actualizar_estado_servicio' srv.id %}" style="min-width: 215px;">
                             {% csrf_token %}
                             <select name="estado" class="form-control" style="min-height: 36px; padding: 0.3rem 0.65rem; font-size: 0.85rem;" onchange="this.form.submit()">
                                 <option value="pendiente" {% if srv.estado == 'pendiente' %}selected{% endif %}>Pendiente de revisión</option>
+                                <option value="esperando_aprobacion" {% if srv.estado == 'esperando_aprobacion' %}selected{% endif %}>Esperando aprobación de cotización</option>
                                 <option value="en_proceso" {% if srv.estado == 'en_proceso' %}selected{% endif %}>En reparación</option>
                                 <option value="completado" {% if srv.estado == 'completado' %}selected{% endif %}>Completado / Entregado</option>
                                 <option value="cancelado" {% if srv.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>

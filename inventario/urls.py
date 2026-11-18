@@ -17,4 +17,7 @@ urlpatterns = [
     path('servicio-tecnico/<int:servicio_id>/repuestos/', views.cargar_repuestos_servicio, name='cargar_repuestos_servicio'),
     path('clientes/<int:cliente_id>/editar/', views.editar_cliente, name='editar_cliente'),
     path('servicio-tecnico/<int:servicio_id>/constancia-pdf/', views.descargar_constancia_servicio_pdf, name='descargar_constancia_servicio_pdf'),
+    path('servicio-tecnico/<int:servicio_id>/cotizar/', views.cotizar_orden_servicio, name='cotizar_orden_servicio'),
+    path('cotizaciones/<int:cotizacion_id>/aprobar/', views.aprobar_cotizacion_orden, name='aprobar_cotizacion_orden'),
+    path('historial/', views.historial_taller, name='historial_taller'),
 ]

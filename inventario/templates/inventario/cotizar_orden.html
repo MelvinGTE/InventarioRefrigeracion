@@ -1,0 +1,204 @@
+{% extends 'inventario/base.html' %}
+{% block title %}Cotizar Orden #{{ servicio.id }} | Inventario Chomin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>
+            {% if cotizacion %}Editar Cotización COT-{{ cotizacion.id|stringformat:"04d" }}{% else %}Cotizar Reparación{% endif %}
+            &bull; Orden #{{ servicio.id }}
+        </h1>
+        <p>Cliente: <strong>{{ servicio.cliente.nombre }}</strong> &bull; Equipo: <strong>{{ servicio.equipo }}</strong></p>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.65rem;">
+        {% if cotizacion %}
+        <a href="{% url 'descargar_cotizacion_pdf' cotizacion.id %}" target="_blank" class="btn btn-secondary">
+            Descargar PDF Actual
+        </a>
+        {% endif %}
+        <a href="{% url 'clientes' %}" class="btn btn-secondary">Volver a Taller</a>
+    </div>
+</div>
+
+<!-- Ficha de referencia de la falla -->
+<div class="card" style="background: var(--bg-surface); border-left: 4px solid var(--primary); padding: 1rem 1.25rem;">
+    <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Falla Reportada en Orden #{{ servicio.id }}</div>
+    <p style="font-size: 0.92rem; color: var(--slate-800); margin-top: 0.25rem;">{{ servicio.descripcion_falla }}</p>
+</div>
+
+<!-- Catálogo de repuestos activos -->
+<datalist id="catalogoCotOrden">
+    {% for prod in productos %}
+    <option value="{{ prod.nombre }}"
+            data-id="{{ prod.id }}"
+            data-precio="{{ prod.precio|stringformat:'.2f' }}"
+            data-stock="{{ prod.cantidad }}">
+        Stock: {{ prod.cantidad }} uds. | Q {{ prod.precio }}
+    </option>
+    {% endfor %}
+</datalist>
+
+<div class="card">
+    <form method="POST" id="formCotizarOrden">
+        {% csrf_token %}
+
+        <div class="form-grid cols-2" style="margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--slate-200); align-items: start;">
+            <div class="form-group">
+                <label for="descripcion_trabajo">Descripción del trabajo a realizar *</label>
+                <textarea id="descripcion_trabajo"
+                          name="descripcion_trabajo"
+                          class="form-control"
+                          rows="2"
+                          placeholder="Ej. Cambio de compresor, carga de refrigerante, vacío y soldadura..."
+                          required>{{ cotizacion.descripcion_trabajo|default_if_none:'' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="costo_mano_obra">Costo de Mano de Obra (Q) *</label>
+                <div class="currency-wrapper">
+                    <span class="currency-prefix">Q</span>
+                    <input type="number"
+                           id="costo_mano_obra"
+                           name="costo_mano_obra"
+                           class="form-control"
+                           step="0.01"
+                           min="0"
+                           value="{{ cotizacion.costo_mano_obra|default:'0.00'|stringformat:'.2f' }}"
+                           required>
+                </div>
+                <small style="font-size: 0.76rem; color: var(--slate-600);">Se sumará automáticamente al total de repuestos.</small>
+            </div>
+        </div>
+
+        <h3 class="card-title">Repuestos Cotizados</h3>
+
+
+
+        <h3 class="card-title">Repuestos y Mano de Obra Cotizados</h3>
+        <div id="listaItemsOrdenCot" style="display: flex; flex-direction: column; gap: 0.85rem;">
+            {% if cotizacion and cotizacion.items.all %}
+                {% for item in cotizacion.items.all %}
+                <div class="orden-cot-row" style="background: var(--bg-surface); padding: 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+                    <div class="form-grid cols-3" style="align-items: end;">
+                        <div class="form-group">
+                            <label>Repuesto del catálogo o descripción de mano de obra *</label>
+                            <input type="text"
+                                   name="descripcion[]"
+                                   list="catalogoCotOrden"
+                                   class="form-control oc-input-desc"
+                                   value="{{ item.descripcion }}"
+                                   autocomplete="off"
+                                   >
+                            <input type="hidden" name="producto_id[]" class="oc-hidden-prod" value="{{ item.producto.id|default:'' }}">
+                            <input type="hidden" name="tipo_item[]" class="oc-hidden-tipo" value="{% if item.es_mano_obra %}mano_obra{% else %}repuesto{% endif %}">
+                            <small class="oc-hint" style="font-size: 0.76rem; color: var(--slate-600); min-height: 1rem;">
+                                {% if item.producto %}Repuesto en inventario (Stock: {{ item.producto.cantidad }}){% else %}Servicio / Mano de obra{% endif %}
+                            </small>
+                        </div>
+
+                        <div class="form-grid cols-2">
+                            <div class="form-group">
+                                <label>Cantidad *</label>
+                                <input type="number" name="cantidad[]" class="form-control oc-input-cant" min="1" value="{{ item.cantidad }}" required>
+                                <small style="min-height: 1rem;"></small>
+                            </div>
+                            <div class="form-group">
+                                <label>Precio Unit. (Q) *</label>
+                                <div class="currency-wrapper">
+                                    <span class="currency-prefix">Q</span>
+                                    <input type="number" name="precio[]" class="form-control oc-input-precio" step="0.01" min="0" value="{{ item.precio_unitario|stringformat:'.2f' }}" required>
+                                </div>
+                                <small style="min-height: 1rem;"></small>
+                            </div>
+                        </div>
+
+                        <div class="form-grid cols-2" style="align-items: end;">
+                            <div class="form-group">
+                                <label>Subtotal</label>
+                                <div class="form-control oc-subtotal" style="display: flex; align-items: center; font-weight: 700; color: var(--primary); background: var(--white);">
+                                    Q {{ item.subtotal|floatformat:2 }}
+                                </div>
+                                <small style="min-height: 1rem;"></small>
+                            </div>
+                            <div class="form-group">
+                                <button type="button" class="btn btn-danger-soft btn-sm oc-btn-remove">Quitar</button>
+                                <small style="min-height: 1rem;"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Fila inicial vacía -->
+                <div class="orden-cot-row" style="background: var(--bg-surface); padding: 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+                    <div class="form-grid cols-3" style="align-items: end;">
+                        <div class="form-group">
+                            <label>Repuesto del catálogo o descripción de mano de obra *</label>
+                            <input type="text"
+                                   name="descripcion[]"
+                                   list="catalogoCotOrden"
+                                   class="form-control oc-input-desc"
+                                   placeholder="Ej. Compresor R134 o Mano de obra reparación..."
+                                   autocomplete="off"
+                                   >
+                            <input type="hidden" name="producto_id[]" class="oc-hidden-prod">
+                            <input type="hidden" name="tipo_item[]" class="oc-hidden-tipo" value="mano_obra">
+                            <small class="oc-hint" style="font-size: 0.76rem; color: var(--slate-600); min-height: 1rem;"></small>
+                        </div>
+
+                        <div class="form-grid cols-2">
+                            <div class="form-group">
+                                <label>Cantidad *</label>
+                                <input type="number" name="cantidad[]" class="form-control oc-input-cant" min="1" value="1" required>
+                                <small style="min-height: 1rem;"></small>
+                            </div>
+                            <div class="form-group">
+                                <label>Precio Unit. (Q) *</label>
+                                <div class="currency-wrapper">
+                                    <span class="currency-prefix">Q</span>
+                                    <input type="number" name="precio[]" class="form-control oc-input-precio" step="0.01" min="0" value="0.00" required>
+                                </div>
+                                <small style="min-height: 1rem;"></small>
+                            </div>
+                        </div>
+
+                        <div class="form-grid cols-2" style="align-items: end;">
+                            <div class="form-group">
+                                <label>Subtotal</label>
+                                <div class="form-control oc-subtotal" style="display: flex; align-items: center; font-weight: 700; color: var(--primary); background: var(--white);">
+                                    Q 0.00
+                                </div>
+                                <small style="min-height: 1rem;"></small>
+                            </div>
+                            <div class="form-group">
+                                <button type="button" class="btn btn-danger-soft btn-sm oc-btn-remove">Quitar</button>
+                                <small style="min-height: 1rem;"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.6rem;">
+            <button type="button" id="btnAddLineaOrdenCot" class="btn btn-secondary">+ Agregar repuesto o mano de obra</button>
+        </div>
+
+        <div class="summary-box">
+            <div>
+                <span style="font-size: 0.85rem; color: var(--slate-600); display: block;">Total Cotizado de Reparación</span>
+                <strong style="font-size: 0.9rem;">No descuenta stock hasta que el cliente apruebe</strong>
+            </div>
+            <div class="summary-total" id="totalOrdenCot">Q {{ cotizacion.total|default:'0.00'|floatformat:2 }}</div>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.75rem;">
+            <button type="submit" name="accion" value="guardar" class="btn btn-secondary">
+                Guardar Cotización
+            </button>
+            <button type="submit" name="accion" value="guardar_pdf" class="btn btn-primary">
+                Guardar y Descargar PDF
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -94,6 +94,15 @@
                         <span>Clientes y Técnico</span>
                     </a>
                 </li>
+                <li>
+                    <a href="{% url 'historial_taller' %}" class="nav-link {% if request.resolver_match.url_name == 'historial_taller' %}active{% endif %}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Historial del Taller</span>
+                    </a>
+                </li>
             </ul>
 
             <div class="sidebar-footer">
@@ -127,37 +136,49 @@
     </div>
 
     <!-- Barra Inferior solo visible en Móvil -->
-    <nav class="bottom-nav" aria-label="Navegación principal móvil">
-        <a href="{% url 'cargar_producto' %}" class="bottom-link {% if request.resolver_match.url_name == 'cargar_producto' %}active{% endif %}">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>Cargar</span>
-        </a>
-        <a href="{% url 'descargar_inventario' %}" class="bottom-link {% if request.resolver_match.url_name == 'descargar_inventario' %}active{% endif %}">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            </svg>
-            <span>Descargar</span>
-        </a>
-        <a href="{% url 'cotizaciones' %}" class="bottom-link {% if request.resolver_match.url_name == 'cotizaciones' %}active{% endif %}">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-            </svg>
-            <span>Cotizar</span>
-        </a>
-        <a href="{% url 'clientes' %}" class="bottom-link {% if request.resolver_match.url_name == 'clientes' %}active{% endif %}">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-            </svg>
-            <span>Clientes</span>
-        </a>
-    </nav>
+  <nav class="bottom-nav" aria-label="Navegación móvil">
+    <a href="{% url 'cargar_producto' %}" class="bottom-link {% if request.resolver_match.url_name == 'cargar_producto' %}active{% endif %}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Cargar</span>
+    </a>
+
+    <a href="{% url 'descargar_inventario' %}" class="bottom-link {% if request.resolver_match.url_name == 'descargar_inventario' %}active{% endif %}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>Descargar</span>
+    </a>
+
+    <a href="{% url 'cotizaciones' %}" class="bottom-link {% if request.resolver_match.url_name == 'cotizaciones' %}active{% endif %}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        <span>Cotizar</span>
+    </a>
+
+    <a href="{% url 'clientes' %}" class="bottom-link {% if request.resolver_match.url_name == 'clientes' or request.resolver_match.url_name == 'perfil_cliente' %}active{% endif %}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span>Clientes</span>
+    </a>
+
+    <a href="{% url 'historial_taller' %}" class="bottom-link {% if request.resolver_match.url_name == 'historial_taller' %}active{% endif %}">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span>Historial</span>
+    </a>
+</nav>
+
 
     <script src="{% static 'app.js' %}"></script>
 </body>

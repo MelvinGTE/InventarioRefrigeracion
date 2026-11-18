@@ -175,13 +175,29 @@
                         {% endif %}
 
                         {% if d.servicio_tecnico %}
-                            <div style="margin-top: 0.3rem;">
+                            <div style="margin-top: 0.3rem; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;">
                                 <button type="button"
                                         class="btn btn-secondary btn-sm"
                                         style="min-height: 28px; padding: 0.15rem 0.6rem; font-size: 0.76rem; color: var(--primary-hover); border-color: #bae6fd; background: var(--primary-light);"
                                         data-open-modal="modalOrdenDetalle{{ d.servicio_tecnico.id }}">
                                     Orden #{{ d.servicio_tecnico.id }} &bull; {{ d.servicio_tecnico.equipo|truncatechars:22 }}
                                 </button>
+                                {% if d.servicio_tecnico.cotizacion %}
+                                    <button type="button"
+                                            class="btn btn-secondary btn-sm"
+                                            style="min-height: 28px; padding: 0.15rem 0.6rem; font-size: 0.76rem;"
+                                            data-open-modal="modalCotizacionDetalle{{ d.id }}">
+                                        Ver COT-{{ d.servicio_tecnico.cotizacion.id|stringformat:"04d" }}
+                                    </button>
+                                {% endif %}
+                               {% if d.servicio_tecnico.estado == 'completado' %}
+                                    <button type="button"
+                                            class="btn btn-secondary btn-sm"
+                                            style="min-height: 28px; padding: 0.15rem 0.6rem; font-size: 0.76rem;"
+                                            data-open-modal="modalConstanciaDetalle{{ d.id }}">
+                                        Ver Constancia
+                                    </button>
+                                {% endif %}
                             </div>
                         {% elif d.nota_salida %}
                             <small style="display: block; color: var(--slate-600);">{{ d.nota_salida }}</small>
@@ -302,6 +318,195 @@
                 <div style="margin-top: 1.15rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.65rem;">
                     <a href="{% url 'perfil_cliente' srv.cliente.id %}" class="btn btn-secondary btn-sm">Ir al expediente del cliente</a>
                     <button type="button" class="btn btn-primary btn-sm" data-close-modal="modalOrdenDetalle{{ srv.id }}">Cerrar</button>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+    {% endif %}
+{% endfor %}
+<!-- MODALES DE VISUALIZACIÓN DE COTIZACIÓN -->
+{% for d in historial %}
+    {% if d.servicio_tecnico and d.servicio_tecnico.cotizacion %}
+        {% with cot=d.servicio_tecnico.cotizacion %}
+        <div id="modalCotizacionDetalle{{ d.id }}" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+            <div class="modal-box" style="max-width: 640px;">
+                <div class="modal-header">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <h2 class="card-title" style="margin-bottom: 0;">Cotización COT-{{ cot.id|stringformat:"04d" }}</h2>
+                            <span class="badge {% if cot.estado == 'aprobada' %}badge-success{% elif cot.estado == 'rechazada' %}badge-danger{% else %}badge-warning{% endif %}">
+                                {{ cot.get_estado_display }}
+                            </span>
+                        </div>
+                        <small style="color: var(--slate-600);">
+                            Orden #{{ d.servicio_tecnico.id }} &bull; Cliente: <strong>{{ d.nombre_destinatario }}</strong> &bull; Equipo: <strong>{{ d.servicio_tecnico.equipo }}</strong>
+                        </small>
+                    </div>
+                    <button type="button" class="modal-close-btn" data-close-modal="modalCotizacionDetalle{{ d.id }}">&times;</button>
+                </div>
+
+                <!-- Ficha de validez y trabajo técnico -->
+                <div style="background: var(--bg-surface); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 0.95rem; margin-bottom: 1rem;">
+                    <div class="form-grid cols-2" style="gap: 0.75rem;">
+                        <div>
+                            <small style="color: var(--slate-600); font-weight: 600; text-transform: uppercase; font-size: 0.72rem;">Fecha de emisión</small>
+                            <div style="font-weight: 700; color: var(--dark-navy); margin-top: 0.15rem;">{{ cot.fecha|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        <div>
+                            <small style="color: var(--slate-600); font-weight: 600; text-transform: uppercase; font-size: 0.72rem;">Validez de oferta</small>
+                            <div style="font-size: 0.85rem; margin-top: 0.15rem;"><strong>{{ cot.validez }}</strong></div>
+                        </div>
+                    </div>
+
+                    {% if cot.descripcion_trabajo %}
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--slate-200);">
+                        <small style="color: var(--slate-600); font-weight: 600; text-transform: uppercase; font-size: 0.72rem;">Trabajo técnico a realizar</small>
+                        <p style="font-size: 0.9rem; color: var(--slate-800); margin-top: 0.2rem;">{{ cot.descripcion_trabajo }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Tabla de repuestos y mano de obra cotizados -->
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.5rem;">
+                    Desglose Cotizado
+                </div>
+                <div class="table-responsive" style="margin-bottom: 1rem;">
+                    <table style="font-size: 0.86rem;">
+                        <thead>
+                            <tr>
+                                <th style="width: 55px; text-align: center;">Cant.</th>
+                                <th>Concepto / Repuesto</th>
+                                <th style="text-align: right;">P. Unit.</th>
+                                <th style="text-align: right;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cot.items.all %}
+                            <tr>
+                                <td style="text-align: center;"><strong>{{ item.cantidad }}</strong></td>
+                                <td>{{ item.descripcion }}</td>
+                                <td style="text-align: right;">Q {{ item.precio_unitario|floatformat:2 }}</td>
+                                <td style="text-align: right;">Q {{ item.subtotal|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if cot.costo_mano_obra > 0 %}
+                            <tr style="background: var(--primary-light);">
+                                <td style="text-align: center;"><strong>1</strong></td>
+                                <td><strong>Mano de obra técnica / Servicio de reparación</strong></td>
+                                <td style="text-align: right;">Q {{ cot.costo_mano_obra|floatformat:2 }}</td>
+                                <td style="text-align: right;"><strong>Q {{ cot.costo_mano_obra|floatformat:2 }}</strong></td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="summary-box" style="margin-top: 0; padding: 0.75rem 1rem;">
+                    <strong>Total Cotizado</strong>
+                    <span class="summary-total" style="font-size: 1.15rem;">Q {{ cot.total|floatformat:2 }}</span>
+                </div>
+
+                <div style="margin-top: 1.15rem; display: flex; justify-content: flex-end; gap: 0.65rem;">
+                    <button type="button" class="btn btn-primary btn-sm" data-close-modal="modalCotizacionDetalle{{ d.id }}">Cerrar</button>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+    {% endif %}
+{% endfor %}
+
+<!-- MODALES DE VISUALIZACIÓN DE CONSTANCIA DE REPARACIÓN -->
+{% for d in historial %}
+    {% if d.servicio_tecnico and d.servicio_tecnico.estado == 'completado' %}
+        {% with srv=d.servicio_tecnico %}
+        <div id="modalConstanciaDetalle{{ d.id }}" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+            <div class="modal-box" style="max-width: 640px;">
+                <div class="modal-header">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <h2 class="card-title" style="margin-bottom: 0;">Constancia de Reparación &bull; ORD-{{ srv.id|stringformat:"04d" }}</h2>
+                            <span class="badge badge-success">{{ srv.get_estado_display }}</span>
+                        </div>
+                        <small style="color: var(--slate-600);">
+                            Cliente: <strong>{{ srv.cliente.nombre }}</strong> ({{ srv.cliente.telefono }}) &bull; Equipo: <strong>{{ srv.equipo }}</strong>
+                        </small>
+                    </div>
+                    <button type="button" class="modal-close-btn" data-close-modal="modalConstanciaDetalle{{ d.id }}">&times;</button>
+                </div>
+
+                <!-- Ficha de diagnóstico y trabajo realizado -->
+                <div style="background: var(--bg-surface); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 0.95rem; margin-bottom: 1rem;">
+                    <div class="form-grid cols-2" style="gap: 0.75rem;">
+                        <div>
+                            <small style="color: var(--slate-600); font-weight: 600; text-transform: uppercase; font-size: 0.72rem;">Fecha de ingreso</small>
+                            <div style="font-weight: 700; color: var(--dark-navy); margin-top: 0.15rem;">{{ srv.fecha_solicitud|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        <div>
+                            <small style="color: var(--slate-600); font-weight: 600; text-transform: uppercase; font-size: 0.72rem;">Fecha de cierre / entrega</small>
+                            <div style="font-weight: 700; color: var(--success); margin-top: 0.15rem;">
+                                {% if srv.fecha_cierre %}{{ srv.fecha_cierre|date:"d/m/Y H:i" }}{% else %}Completado{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--slate-200);">
+                        <small style="color: var(--slate-600); font-weight: 600; text-transform: uppercase; font-size: 0.72rem;">1. Falla reportada / Diagnóstico inicial</small>
+                        <p style="font-size: 0.9rem; color: var(--slate-800); margin-top: 0.2rem;">{{ srv.descripcion_falla }}</p>
+                    </div>
+
+                    <div style="margin-top: 0.65rem;">
+                        <small style="color: var(--slate-600); font-weight: 600; text-transform: uppercase; font-size: 0.72rem;">2. Trabajo técnico realizado</small>
+                        <p style="font-size: 0.9rem; color: var(--primary-hover); font-weight: 500; margin-top: 0.2rem;">
+                            {{ srv.detalle_mano_obra|default:"Revisión, ajuste y pruebas de funcionamiento general del equipo." }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Desglose de repuestos y mano de obra -->
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.5rem;">
+                    3. Desglose de Repuestos Utilizados y Mano de Obra
+                </div>
+                <div class="table-responsive" style="margin-bottom: 1rem;">
+                    <table style="font-size: 0.86rem;">
+                        <thead>
+                            <tr>
+                                <th style="width: 55px; text-align: center;">Cant.</th>
+                                <th>Concepto / Repuesto</th>
+                                <th style="text-align: right;">P. Unit.</th>
+                                <th style="text-align: right;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for desc in srv.descargas_repuestos.all %}
+                                {% for item in desc.detalles.all %}
+                                <tr>
+                                    <td style="text-align: center;"><strong>{{ item.cantidad }}</strong></td>
+                                    <td>{{ item.producto.nombre }} <small style="color: var(--slate-500);">(Salida #{{ desc.id|stringformat:"04d" }})</small></td>
+                                    <td style="text-align: right;">Q {{ item.precio_unitario|floatformat:2 }}</td>
+                                    <td style="text-align: right;">Q {{ item.subtotal|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% endfor %}
+                            {% if srv.costo_mano_obra > 0 %}
+                            <tr style="background: var(--primary-light);">
+                                <td style="text-align: center;"><strong>1</strong></td>
+                                <td><strong>Mano de obra técnica</strong></td>
+                                <td style="text-align: right;">Q {{ srv.costo_mano_obra|floatformat:2 }}</td>
+                                <td style="text-align: right;"><strong>Q {{ srv.costo_mano_obra|floatformat:2 }}</strong></td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="summary-box" style="margin-top: 0; padding: 0.75rem 1rem;">
+                    <strong>Total Servicio</strong>
+                    <span class="summary-total" style="font-size: 1.15rem;">Q {{ srv.total_reparacion|floatformat:2 }}</span>
+                </div>
+
+                <div style="margin-top: 1.15rem; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.65rem;">
+                    <a href="{% url 'descargar_constancia_servicio_pdf' srv.id %}" class="btn btn-secondary btn-sm">Descargar PDF</a>
+                    <button type="button" class="btn btn-primary btn-sm" data-close-modal="modalConstanciaDetalle{{ d.id }}">Cerrar</button>
                 </div>
             </div>
         </div>

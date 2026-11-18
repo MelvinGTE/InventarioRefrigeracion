@@ -570,4 +570,99 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // =========================================================
+    // 10. COTIZADOR EDITABLE DE ORDEN DE SERVICIO TÉCNICO
+    // =========================================================
+    const formCotizarOrden = document.getElementById('formCotizarOrden');
+    const listaItemsOrdenCot = document.getElementById('listaItemsOrdenCot');
+    const totalOrdenCot = document.getElementById('totalOrdenCot');
+    const btnAddLineaOrdenCot = document.getElementById('btnAddLineaOrdenCot');
+    const inputManoObraCot = document.getElementById('costo_mano_obra');
+
+    if (formCotizarOrden && listaItemsOrdenCot) {
+        const opcionesOrdenCot = Array.from(document.querySelectorAll('#catalogoCotOrden option'));
+
+        const recalcularOrdenCot = () => {
+            let total = 0;
+
+            listaItemsOrdenCot.querySelectorAll('.orden-cot-row').forEach((row) => {
+                const descInput = row.querySelector('.oc-input-desc');
+                const hiddenProd = row.querySelector('.oc-hidden-prod');
+                const hiddenTipo = row.querySelector('.oc-hidden-tipo');
+                const cantInput = row.querySelector('.oc-input-cant');
+                const precioInput = row.querySelector('.oc-input-precio');
+                const subDisplay = row.querySelector('.oc-subtotal');
+                const hint = row.querySelector('.oc-hint');
+
+                const texto = descInput.value.trim().toLowerCase();
+                const match = opcionesOrdenCot.find((opt) => opt.value.trim().toLowerCase() === texto);
+
+                if (match) {
+                    if (hiddenProd.value !== match.dataset.id) {
+                        hiddenProd.value = match.dataset.id;
+                        precioInput.value = parseFloat((match.dataset.precio || '0').replace(',', '.')).toFixed(2);
+                    }
+                    if (hiddenTipo) hiddenTipo.value = 'repuesto';
+                    hint.textContent = `Repuesto en inventario (Stock: ${match.dataset.stock})`;
+                    hint.style.color = 'var(--primary)';
+                } else {
+                    hiddenProd.value = '';
+                    if (hiddenTipo) hiddenTipo.value = 'mano_obra';
+                    hint.textContent = texto ? 'Servicio / Ítem personalizado' : '';
+                    hint.style.color = 'var(--slate-600)';
+                }
+
+                const cant = parseInt(cantInput.value, 10) || 0;
+                const precio = parseFloat((precioInput.value || '0').replace(',', '.')) || 0;
+                const sub = cant * precio;
+                subDisplay.textContent = `Q ${sub.toFixed(2)}`;
+                total += sub;
+            });
+
+            const manoObra = inputManoObraCot
+                ? (parseFloat((inputManoObraCot.value || '0').replace(',', '.')) || 0)
+                : 0;
+            total += manoObra;
+
+            if (totalOrdenCot) {
+                totalOrdenCot.textContent = `Q ${total.toFixed(2)}`;
+            }
+        };
+
+        listaItemsOrdenCot.addEventListener('input', recalcularOrdenCot);
+        listaItemsOrdenCot.addEventListener('change', recalcularOrdenCot);
+
+        if (inputManoObraCot) {
+            inputManoObraCot.addEventListener('input', recalcularOrdenCot);
+            inputManoObraCot.addEventListener('change', recalcularOrdenCot);
+        }
+
+        if (btnAddLineaOrdenCot) {
+            btnAddLineaOrdenCot.addEventListener('click', () => {
+                const firstRow = listaItemsOrdenCot.querySelector('.orden-cot-row');
+                const clone = firstRow.cloneNode(true);
+                clone.querySelector('.oc-input-desc').value = '';
+                clone.querySelector('.oc-hidden-prod').value = '';
+                const tipoHidden = clone.querySelector('.oc-hidden-tipo');
+                if (tipoHidden) tipoHidden.value = 'repuesto';
+                clone.querySelector('.oc-input-cant').value = 1;
+                clone.querySelector('.oc-input-precio').value = '0.00';
+                clone.querySelector('.oc-subtotal').textContent = 'Q 0.00';
+                clone.querySelector('.oc-hint').textContent = '';
+                listaItemsOrdenCot.appendChild(clone);
+                clone.querySelector('.oc-input-desc').focus();
+            });
+        }
+
+        listaItemsOrdenCot.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('.oc-btn-remove');
+            if (removeBtn && listaItemsOrdenCot.querySelectorAll('.orden-cot-row').length > 1) {
+                removeBtn.closest('.orden-cot-row').remove();
+                recalcularOrdenCot();
+            }
+        });
+
+        recalcularOrdenCot();
+    }
 });

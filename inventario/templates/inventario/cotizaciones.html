@@ -187,13 +187,22 @@
                     <td>{{ cot.items.count }} ítem(s)</td>
                     <td><strong>Q {{ cot.total }}</strong></td>
                     <td>
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.45rem;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center;">
                             <button type="button" class="btn btn-secondary btn-sm" data-toggle-srv="detalleCotGeneral{{ cot.id }}">
                                 Ver detalle
                             </button>
                             <a href="{% url 'descargar_cotizacion_pdf' cot.id %}" class="btn btn-primary btn-sm">
                                 PDF
                             </a>
+                            {% if cot.servicio_tecnico and cot.estado == 'pendiente' %}
+                            <form method="POST" action="{% url 'aprobar_cotizacion_orden' cot.id %}"
+                                  onsubmit="return confirm('¿Aprobar COT-{{ cot.id|stringformat:"04d" }}? Se descontarán los repuestos de bodega.');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-sm" style="background: var(--success);">
+                                    Aprobar
+                                </button>
+                            </form>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
@@ -238,4 +247,5 @@
             </tbody>
         </table>
     </div>
+</div>
 {% endblock %}
