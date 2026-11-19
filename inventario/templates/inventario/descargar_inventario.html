@@ -1,11 +1,11 @@
 {% extends 'inventario/base.html' %}
-{% block title %}Descargar Inventario | Inventario Chomin{% endblock %}
+{% block title %}Descargar Inventario | TECNI SOLUTION{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
         <h1>Descargar de Inventario</h1>
-        <p>Registra salidas de bodega por venta o servicio técnico y consulta el historial completo.</p>
+        <p>Registra salidas de bodega por venta o servicio técnico y consulta el historial auditado.</p>
     </div>
 </div>
 
@@ -27,8 +27,16 @@
     {% endfor %}
 </datalist>
 
-<div class="card">
-    <h2 class="card-title">Nueva Salida de Bodega</h2>
+<div class="card card-warm">
+    <h2 class="card-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-warm)" stroke-width="2.2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>Nueva Salida de Bodega</span>
+    </h2>
+
     <form method="POST" id="descargaForm">
         {% csrf_token %}
 
@@ -74,7 +82,7 @@
         <!-- Selección dinámica de repuestos con buscador -->
         <h3 class="card-title">Repuestos a descontar</h3>
         <div id="listaDescarga" style="display: flex; flex-direction: column; gap: 0.85rem;">
-            <div class="item-row" style="background: var(--bg-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+            <div class="item-row" style="background: var(--bg-surface); padding: 1.05rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200); border-left: 3.5px solid var(--primary);">
                 <div class="form-grid cols-3" style="align-items: end;">
                     <div class="form-group">
                         <label>Buscar repuesto *</label>
@@ -115,19 +123,24 @@
         <div class="summary-box">
             <div>
                 <span style="font-size: 0.85rem; color: var(--slate-600); display: block;">Costo Total Descontado</span>
-                <strong style="font-size: 0.9rem;">Calculado según precio unitario vigente</strong>
+                <strong style="font-size: 0.9rem; color: var(--dark-navy);">Calculado según precio unitario vigente</strong>
             </div>
             <div class="summary-total" id="totalDescarga">Q 0.00</div>
         </div>
 
         <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
-            <button type="submit" class="btn btn-primary">Confirmar Descarga de Stock</button>
+            <button type="submit" class="btn btn-warm">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Confirmar Descarga de Stock</span>
+            </button>
         </div>
     </form>
 </div>
 
 <!-- HISTORIAL DE DESCARGAS -->
-<div class="card">
+<div class="card card-cold">
     <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem;">
         <div>
             <h2 class="card-title" style="margin-bottom: 0.15rem;">Historial de Descargas de Inventario</h2>
@@ -158,24 +171,28 @@
             <tbody>
                 {% for d in historial %}
                 <tr>
-                    <td><strong>#{{ d.id|stringformat:"04d" }}</strong></td>
-                    <td>{{ d.fecha|date:"d/m/Y H:i" }}</td>
+                    <td style="white-space: nowrap;">
+                        <span style="font-size: 0.8rem; font-weight: 700; background: var(--dark-navy); color: var(--white); padding: 0.22rem 0.55rem; border-radius: 6px;">
+                            #{{ d.id|stringformat:"04d" }}
+                        </span>
+                    </td>
+                    <td style="white-space: nowrap; color: var(--slate-600);">{{ d.fecha|date:"d/m/Y H:i" }}</td>
                     <td>
-                        <span class="badge {% if d.motivo == 'venta' %}badge-success{% elif d.motivo == 'tecnico' %}badge-info{% else %}badge-warning{% endif %}">
+                        <span class="badge {% if d.motivo == 'venta' %}badge-success{% elif d.motivo == 'tecnico' %}badge-info{% else %}badge-warm{% endif %}">
                             {{ d.get_motivo_display }}
                         </span>
                     </td>
-                   <td>
+                    <td>
                         {% if d.cliente %}
-                            <a href="{% url 'perfil_cliente' d.cliente.id %}" style="color: var(--primary); font-weight: 600; text-decoration: none;">
+                            <a href="{% url 'perfil_cliente' d.cliente.id %}" style="color: var(--primary); font-weight: 700; text-decoration: none;">
                                 {{ d.cliente.nombre }}
                             </a>
                         {% else %}
-                            <strong>{{ d.nombre_destinatario }}</strong>
+                            <strong style="color: var(--dark-navy);">{{ d.nombre_destinatario }}</strong>
                         {% endif %}
 
                         {% if d.servicio_tecnico %}
-                            <div style="margin-top: 0.3rem; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;">
+                            <div style="margin-top: 0.35rem; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;">
                                 <button type="button"
                                         class="btn btn-secondary btn-sm"
                                         style="min-height: 28px; padding: 0.15rem 0.6rem; font-size: 0.76rem; color: var(--primary-hover); border-color: #bae6fd; background: var(--primary-light);"
@@ -190,7 +207,7 @@
                                         Ver COT-{{ d.servicio_tecnico.cotizacion.id|stringformat:"04d" }}
                                     </button>
                                 {% endif %}
-                               {% if d.servicio_tecnico.estado == 'completado' %}
+                                {% if d.servicio_tecnico.estado == 'completado' %}
                                     <button type="button"
                                             class="btn btn-secondary btn-sm"
                                             style="min-height: 28px; padding: 0.15rem 0.6rem; font-size: 0.76rem;"
@@ -215,11 +232,11 @@
                             {% endfor %}
                         </ul>
                     </td>
-                    <td><strong style="color: var(--dark-navy); font-size: 0.98rem;">Q {{ d.total_descontado }}</strong></td>
+                    <td style="white-space: nowrap;"><strong style="color: var(--primary); font-size: 0.98rem;">Q {{ d.total_descontado }}</strong></td>
                 </tr>
                 {% empty %}
                 <tr class="empty-row">
-                    <td colspan="6" style="text-align: center; color: var(--slate-400);">Aún no se han registrado descargas de inventario.</td>
+                    <td colspan="6" style="text-align: center; color: var(--slate-400); padding: 2rem;">Aún no se han registrado descargas de inventario.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -237,7 +254,7 @@
                     <div>
                         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                             <h2 class="card-title" style="margin-bottom: 0;">Orden Técnica #{{ srv.id }}</h2>
-                            <span class="badge {% if srv.estado == 'completado' %}badge-success{% elif srv.estado == 'en_proceso' %}badge-info{% else %}badge-warning{% endif %}">
+                            <span class="badge {% if srv.estado == 'completado' %}badge-success{% elif srv.estado == 'en_proceso' %}badge-info{% else %}badge-warm{% endif %}">
                                 {{ srv.get_estado_display }}
                             </span>
                         </div>
@@ -324,6 +341,7 @@
         {% endwith %}
     {% endif %}
 {% endfor %}
+
 <!-- MODALES DE VISUALIZACIÓN DE COTIZACIÓN -->
 {% for d in historial %}
     {% if d.servicio_tecnico and d.servicio_tecnico.cotizacion %}
@@ -334,7 +352,7 @@
                     <div>
                         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                             <h2 class="card-title" style="margin-bottom: 0;">Cotización COT-{{ cot.id|stringformat:"04d" }}</h2>
-                            <span class="badge {% if cot.estado == 'aprobada' %}badge-success{% elif cot.estado == 'rechazada' %}badge-danger{% else %}badge-warning{% endif %}">
+                            <span class="badge {% if cot.estado == 'aprobada' %}badge-success{% elif cot.estado == 'rechazada' %}badge-danger{% else %}badge-warm{% endif %}">
                                 {{ cot.get_estado_display }}
                             </span>
                         </div>
@@ -345,7 +363,6 @@
                     <button type="button" class="modal-close-btn" data-close-modal="modalCotizacionDetalle{{ d.id }}">&times;</button>
                 </div>
 
-                <!-- Ficha de validez y trabajo técnico -->
                 <div style="background: var(--bg-surface); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 0.95rem; margin-bottom: 1rem;">
                     <div class="form-grid cols-2" style="gap: 0.75rem;">
                         <div>
@@ -366,7 +383,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Tabla de repuestos y mano de obra cotizados -->
                 <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.5rem;">
                     Desglose Cotizado
                 </div>
@@ -434,7 +450,6 @@
                     <button type="button" class="modal-close-btn" data-close-modal="modalConstanciaDetalle{{ d.id }}">&times;</button>
                 </div>
 
-                <!-- Ficha de diagnóstico y trabajo realizado -->
                 <div style="background: var(--bg-surface); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 0.95rem; margin-bottom: 1rem;">
                     <div class="form-grid cols-2" style="gap: 0.75rem;">
                         <div>
@@ -462,7 +477,6 @@
                     </div>
                 </div>
 
-                <!-- Desglose de repuestos y mano de obra -->
                 <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.5rem;">
                     3. Desglose de Repuestos Utilizados y Mano de Obra
                 </div>

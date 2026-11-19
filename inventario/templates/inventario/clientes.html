@@ -1,19 +1,45 @@
 {% extends 'inventario/base.html' %}
-{% block title %}Clientes y Servicio Técnico | Inventario Chomin{% endblock %}
+{% block title %}Clientes y Servicio Técnico | TECNI SOLUTION{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
         <h1>Clientes y Servicio Técnico</h1>
-        <p>Gestiona órdenes de reparación, repuestos consumidos, mano de obra y directorio de clientes.</p>
+        <p>Gestiona órdenes de climatización, repuestos consumidos, mano de obra y directorio de clientes.</p>
     </div>
     <div style="display: flex; flex-wrap: wrap; gap: 0.65rem;">
         <button type="button" class="btn btn-secondary" data-open-modal="modalNuevoCliente">
-            + Nuevo Cliente
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+            </svg>
+            <span>Nuevo Cliente</span>
         </button>
-        <button type="button" class="btn btn-primary" data-open-modal="modalNuevaOrden">
-            + Nueva Orden Técnica
+        <button type="button" class="btn btn-warm" data-open-modal="modalNuevaOrden">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Nueva Orden Técnica</span>
         </button>
+    </div>
+</div>
+
+<!-- Indicadores Rápidos de Taller y Cartera -->
+<div class="kpi-grid">
+    <div class="kpi-card warm">
+        <div class="kpi-label">Órdenes Activas</div>
+        <div class="kpi-value" style="color: var(--accent-warm);">{{ ordenes_activas_count }}</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Total Órdenes</div>
+        <div class="kpi-value">{{ servicios.count }}</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Clientes Registrados</div>
+        <div class="kpi-value">{{ clientes.count }}</div>
     </div>
 </div>
 
@@ -53,13 +79,13 @@
      PESTAÑA 1: TALLER Y ÓRDENES TÉCNICAS
      ========================================================= -->
 <section id="tabTaller" class="tab-panel">
-    <div class="card">
-        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem;">
+    <div class="card card-warm">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1.15rem;">
             <div>
                 <h2 class="card-title" style="margin-bottom: 0.15rem;">Órdenes de Servicio Técnico ({{ servicios.count }})</h2>
-                <p style="font-size: 0.85rem; color: var(--slate-600);">Cambia estados, descuenta repuestos y registra mano de obra.</p>
+                <p style="font-size: 0.85rem; color: var(--slate-600);">Cambia estados, cotiza reparaciones y descarga constancias PDF.</p>
             </div>
-            <div class="search-bar-wrapper" style="margin-bottom: 0; width: 100%; max-width: 320px;">
+            <div class="search-bar-wrapper" style="margin-bottom: 0; width: 100%; max-width: 340px;">
                 <svg class="search-bar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -70,35 +96,48 @@
 
         <div id="listaOrdenesTaller" style="display: flex; flex-direction: column; gap: 1rem;">
             {% for srv in servicios %}
-            <div class="orden-card" style="border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-surface);">
-                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.75rem;">
-                    <div>
+            <div class="orden-card"
+                 style="border: 1px solid var(--slate-200);
+                        border-left: 4px solid {% if srv.estado == 'completado' %}var(--success){% elif srv.estado == 'en_proceso' %}var(--primary){% elif srv.estado == 'cancelado' %}var(--danger){% else %}var(--accent-warm){% endif %};
+                        border-radius: var(--radius-md);
+                        padding: 1.1rem;
+                        background: var(--white);
+                        box-shadow: var(--shadow-sm);">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.9rem;">
+                    <div style="flex: 1; min-width: 240px;">
                         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                            <strong style="font-size: 1.05rem;">Orden #{{ srv.id }} &bull; {{ srv.equipo }}</strong>
-                            <span class="badge {% if srv.estado == 'completado' %}badge-success{% elif srv.estado == 'en_proceso' %}badge-info{% else %}badge-warning{% endif %}">
+                            <span style="font-size: 0.78rem; font-weight: 700; background: var(--dark-navy); color: var(--white); padding: 0.2rem 0.55rem; border-radius: 6px;">
+                                ORDEN #{{ srv.id }}
+                            </span>
+                            <strong style="font-size: 1.05rem; color: var(--dark-navy);">{{ srv.equipo }}</strong>
+                            <span class="badge {% if srv.estado == 'completado' %}badge-success{% elif srv.estado == 'en_proceso' %}badge-info{% elif srv.estado == 'cancelado' %}badge-danger{% else %}badge-warm{% endif %}">
                                 {{ srv.get_estado_display }}
                             </span>
                             {% if srv.total_reparacion > 0 %}
                             <span class="badge badge-info">Total: Q {{ srv.total_reparacion|floatformat:2 }}</span>
                             {% endif %}
                         </div>
-                        <div style="font-size: 0.88rem; margin-top: 0.3rem;">
-                            Cliente:
-                            <a href="{% url 'perfil_cliente' srv.cliente.id %}" style="color: var(--primary); font-weight: 600; text-decoration: none;">
+
+                        <div style="font-size: 0.9rem; margin-top: 0.45rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;">
+                            <span style="color: var(--slate-600);">Cliente:</span>
+                            <a href="{% url 'perfil_cliente' srv.cliente.id %}" style="color: var(--primary); font-weight: 700; text-decoration: none;">
                                 {{ srv.cliente.nombre }}
                             </a>
                             <span style="color: var(--slate-600);">({{ srv.cliente.telefono }})</span>
                         </div>
-                        <p style="font-size: 0.88rem; color: var(--slate-700); margin-top: 0.25rem;">
-                            <strong>Falla:</strong> {{ srv.descripcion_falla }}
+
+                        <p style="font-size: 0.88rem; color: var(--slate-700); margin-top: 0.35rem; background: var(--bg-surface); padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--slate-200);">
+                            <strong>Falla reportada:</strong> {{ srv.descripcion_falla }}
                         </p>
-                        <small style="color: var(--slate-600);">
-                            Ingreso: {{ srv.fecha_solicitud|date:"d/m/Y" }}
-                            {% if srv.fecha_cierre %} &bull; <span style="color: var(--success); font-weight: 600;">Cerrado: {{ srv.fecha_cierre|date:"d/m/Y" }}</span>{% endif %}
-                        </small>
+
+                        <div style="margin-top: 0.45rem; font-size: 0.8rem; color: var(--slate-600); display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                            <span>Ingreso: <strong>{{ srv.fecha_solicitud|date:"d/m/Y" }}</strong></span>
+                            {% if srv.fecha_cierre %}
+                            <span style="color: var(--success); font-weight: 600;">Cerrado: {{ srv.fecha_cierre|date:"d/m/Y" }}</span>
+                            {% endif %}
+                        </div>
                     </div>
 
-                    <!-- Acciones directas sobre la orden -->
                     <!-- Acciones directas sobre la orden -->
                     <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
                         {% if srv.cotizacion %}
@@ -124,13 +163,13 @@
 
                         {% if srv.estado == 'completado' %}
                             <a href="{% url 'descargar_constancia_servicio_pdf' srv.id %}" target="_blank" class="btn btn-secondary btn-sm">
-                                Descargar Constancia PDF
+                                Constancia PDF
                             </a>
                         {% endif %}
 
                         <form method="POST" action="{% url 'actualizar_estado_servicio' srv.id %}" style="min-width: 215px;">
                             {% csrf_token %}
-                            <select name="estado" class="form-control" style="min-height: 36px; padding: 0.3rem 0.65rem; font-size: 0.85rem;" onchange="this.form.submit()">
+                            <select name="estado" class="form-control" style="min-height: 36px; padding: 0.3rem 0.65rem; font-size: 0.85rem; font-weight: 600;" onchange="this.form.submit()">
                                 <option value="pendiente" {% if srv.estado == 'pendiente' %}selected{% endif %}>Pendiente de revisión</option>
                                 <option value="esperando_aprobacion" {% if srv.estado == 'esperando_aprobacion' %}selected{% endif %}>Esperando aprobación de cotización</option>
                                 <option value="en_proceso" {% if srv.estado == 'en_proceso' %}selected{% endif %}>En reparación</option>
@@ -143,14 +182,14 @@
 
                 <!-- Desglose de Repuestos y Mano de Obra ya registrados -->
                 {% if srv.descargas_repuestos.all or srv.costo_mano_obra > 0 %}
-                <div style="margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--slate-200);">
-                    <div style="font-size: 0.78rem; font-weight: 700; color: var(--slate-600); text-transform: uppercase; margin-bottom: 0.4rem;">
+                <div style="margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--slate-200);">
+                    <div style="font-size: 0.76rem; font-weight: 700; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.45rem;">
                         Costos aplicados a esta orden:
                     </div>
-                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.86rem;">
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.86rem;">
                         {% for desc in srv.descargas_repuestos.all %}
                             {% for item in desc.detalles.all %}
-                            <li style="display: flex; justify-content: space-between; align-items: center; background: var(--white); padding: 0.4rem 0.75rem; border-radius: 8px; border: 1px solid var(--slate-200);">
+                            <li style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 0.45rem 0.75rem; border-radius: 8px; border: 1px solid var(--slate-200);">
                                 <span>
                                     <strong>{{ item.cantidad }}x</strong> {{ item.producto.nombre }}
                                     <small style="color: var(--slate-400);">(Salida #{{ desc.id|stringformat:"04d" }})</small>
@@ -161,7 +200,7 @@
                         {% endfor %}
 
                         {% if srv.costo_mano_obra > 0 %}
-                        <li style="display: flex; justify-content: space-between; align-items: center; background: var(--primary-light); padding: 0.45rem 0.75rem; border-radius: 8px; border: 1px solid #bae6fd;">
+                        <li style="display: flex; justify-content: space-between; align-items: center; background: var(--primary-light); padding: 0.48rem 0.75rem; border-radius: 8px; border: 1px solid #bae6fd;">
                             <span>
                                 <strong>Mano de obra técnica</strong>
                                 {% if srv.detalle_mano_obra %}<small style="color: var(--slate-700);">— {{ srv.detalle_mano_obra }}</small>{% endif %}
@@ -174,7 +213,7 @@
                 {% endif %}
 
                 <!-- Panel Desplegable para Repuestos y Mano de Obra -->
-                <div id="panelRepuestosSrv{{ srv.id }}" class="hidden" style="margin-top: 1rem; padding: 1rem; background: var(--white); border-radius: var(--radius-md); border: 1.5px solid var(--primary);">
+                <div id="panelRepuestosSrv{{ srv.id }}" class="hidden" style="margin-top: 1rem; padding: 1rem; background: var(--bg-surface); border-radius: var(--radius-md); border: 1.5px solid var(--primary);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                         <strong style="color: var(--primary); font-size: 0.92rem;">Cargar Repuestos / Mano de Obra — Orden #{{ srv.id }}</strong>
                         <button type="button" class="btn btn-secondary btn-sm" data-toggle-srv="panelRepuestosSrv{{ srv.id }}">Cerrar</button>
@@ -183,7 +222,7 @@
                     <form method="POST" action="{% url 'cargar_repuestos_servicio' srv.id %}" class="srv-repuestos-form">
                         {% csrf_token %}
                         <div class="srv-lista-repuestos" style="display: flex; flex-direction: column; gap: 0.65rem;">
-                            <div class="srv-item-row form-grid cols-3" style="align-items: end; background: var(--bg-surface); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--slate-200);">
+                            <div class="srv-item-row form-grid cols-3" style="align-items: end; background: var(--white); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--slate-200);">
                                 <div class="form-group">
                                     <label>Buscar repuesto (Opcional)</label>
                                     <input type="text" list="catalogoServicioRepuestos" class="form-control srv-input-buscar" placeholder="Escribe nombre del repuesto..." autocomplete="off">
@@ -199,7 +238,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Subtotal</label>
-                                        <div class="form-control srv-subtotal-display" style="display: flex; align-items: center; font-weight: 700; color: var(--primary); background: var(--white);">
+                                        <div class="form-control srv-subtotal-display" style="display: flex; align-items: center; font-weight: 700; color: var(--primary); background: var(--bg-surface);">
                                             Q 0.00
                                         </div>
                                         <small style="min-height: 1rem;"></small>
@@ -240,7 +279,7 @@
                 </div>
             </div>
             {% empty %}
-            <div style="text-align: center; padding: 2rem; color: var(--slate-400);">
+            <div style="text-align: center; padding: 2.5rem 1rem; color: var(--slate-400);">
                 No hay órdenes técnicas registradas. Usa el botón <strong>+ Nueva Orden Técnica</strong> arriba para crear una.
             </div>
             {% endfor %}
@@ -252,9 +291,12 @@
      PESTAÑA 2: DIRECTORIO DE CLIENTES
      ========================================================= -->
 <section id="tabClientes" class="tab-panel hidden">
-    <div class="card">
+    <div class="card card-cold">
         <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem;">
-            <h2 class="card-title" style="margin-bottom: 0;">Directorio de Clientes ({{ clientes.count }})</h2>
+            <div>
+                <h2 class="card-title" style="margin-bottom: 0.15rem;">Directorio de Clientes ({{ clientes.count }})</h2>
+                <small style="color: var(--slate-600);">Acceso rápido a WhatsApp, historial y expediente técnico</small>
+            </div>
             <div class="search-bar-wrapper" style="margin-bottom: 0; width: 100%; max-width: 340px;">
                 <svg class="search-bar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
@@ -279,19 +321,19 @@
                 <tbody>
                     {% for c in clientes %}
                     <tr>
-                        <td><strong>{{ c.nombre }}</strong></td>
-                        <td>
+                        <td><strong style="color: var(--dark-navy);">{{ c.nombre }}</strong></td>
+                        <td style="white-space: nowrap;">
                             <a href="https://wa.me/502{{ c.telefono }}" target="_blank" rel="noopener"
                                style="display: inline-flex; align-items: center; gap: 0.35rem; color: var(--success); font-weight: 600; text-decoration: none;">
                                 <span>{{ c.telefono }}</span>
                                 <span style="font-size: 0.72rem; background: var(--success-bg); padding: 0.15rem 0.45rem; border-radius: 6px;">WhatsApp</span>
                             </a>
                         </td>
-                        <td>{{ c.direccion }}</td>
+                        <td style="color: var(--slate-600);">{{ c.direccion }}</td>
                         <td>
                             <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
                                 <span class="badge badge-info">{{ c.cotizaciones.count }} cotiz.</span>
-                                <span class="badge badge-warning">{{ c.servicios.count }} órdenes</span>
+                                <span class="badge badge-warm">{{ c.servicios.count }} órdenes</span>
                                 <span class="badge badge-success">{{ c.descargas.count }} compras</span>
                             </div>
                         </td>
@@ -311,7 +353,7 @@
                     </tr>
                     {% empty %}
                     <tr class="empty-row">
-                        <td colspan="5" style="text-align: center; color: var(--slate-400);">No hay clientes registrados todavía.</td>
+                        <td colspan="5" style="text-align: center; color: var(--slate-400); padding: 2rem;">No hay clientes registrados todavía.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -390,7 +432,7 @@
      MODAL 3: NUEVA ORDEN TÉCNICA
      ========================================================= -->
 <div id="modalNuevaOrden" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
+    <div class="modal-box" style="border-top-color: var(--accent-warm);">
         <div class="modal-header">
             <h2 class="card-title" style="margin-bottom: 0;">Nueva Solicitud de Servicio Técnico</h2>
             <button type="button" class="modal-close-btn" data-close-modal="modalNuevaOrden">&times;</button>
@@ -425,7 +467,7 @@
             </div>
             <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.65rem;">
                 <button type="button" class="btn btn-secondary" data-close-modal="modalNuevaOrden">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Crear Orden Técnica</button>
+                <button type="submit" class="btn btn-warm">Crear Orden Técnica</button>
             </div>
         </form>
     </div>

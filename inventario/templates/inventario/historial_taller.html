@@ -1,51 +1,43 @@
 {% extends 'inventario/base.html' %}
-{% block title %}Historial del Taller | Inventario Chomin{% endblock %}
+{% block title %}Historial del Taller | TECNI SOLUTION{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
         <h1>Historial y Bitácora del Taller</h1>
-        <p>Consulta auditoría de órdenes de reparación, cotizaciones emitidas y salidas de bodega.</p>
+        <p>Consulta auditoría de órdenes de reparación, cotizaciones emitidas, salidas de bodega y constancias entregadas.</p>
     </div>
 </div>
 
 <!-- KPIs DE RESUMEN DEL PERÍODO -->
-<div class="form-grid cols-4" style="margin-bottom: 1.25rem;">
-    <div class="card" style="margin-bottom: 0; padding: 1rem 1.15rem; border-left: 4px solid var(--success);">
-        <small style="color: var(--slate-600); font-weight: 700; text-transform: uppercase; font-size: 0.72rem;">Reparaciones Entregadas</small>
-        <div style="font-size: 1.45rem; font-weight: 800; color: var(--dark-navy); margin-top: 0.2rem;">
-            Q {{ total_ingresos_taller|floatformat:2 }}
-        </div>
-        <small style="color: var(--success); font-weight: 600;">Trabajos completados</small>
+<div class="kpi-grid">
+    <div class="kpi-card" style="border-top: 3px solid var(--success);">
+        <div class="kpi-label">Reparaciones Entregadas</div>
+        <div class="kpi-value" style="color: var(--success);">Q {{ total_ingresos_taller|floatformat:2 }}</div>
+        <small style="color: var(--slate-600); font-weight: 500;">{{ total_constancias }} constancia(s)</small>
     </div>
 
-    <div class="card" style="margin-bottom: 0; padding: 1rem 1.15rem; border-left: 4px solid var(--primary);">
-        <small style="color: var(--slate-600); font-weight: 700; text-transform: uppercase; font-size: 0.72rem;">Ventas Mostrador</small>
-        <div style="font-size: 1.45rem; font-weight: 800; color: var(--dark-navy); margin-top: 0.2rem;">
-            Q {{ total_ventas_mostrador|floatformat:2 }}
-        </div>
-        <small style="color: var(--primary); font-weight: 600;">Salidas directas</small>
+    <div class="kpi-card">
+        <div class="kpi-label">Ventas Mostrador</div>
+        <div class="kpi-value" style="color: var(--primary);">Q {{ total_ventas_mostrador|floatformat:2 }}</div>
+        <small style="color: var(--slate-600); font-weight: 500;">Salidas directas</small>
     </div>
 
-    <div class="card" style="margin-bottom: 0; padding: 1rem 1.15rem; border-left: 4px solid #0284c7;">
-        <small style="color: var(--slate-600); font-weight: 700; text-transform: uppercase; font-size: 0.72rem;">Órdenes Registradas</small>
-        <div style="font-size: 1.45rem; font-weight: 800; color: var(--dark-navy); margin-top: 0.2rem;">
-            {{ total_ordenes }}
-        </div>
-        <small style="color: var(--slate-500);">En los filtros actuales</small>
+    <div class="kpi-card">
+        <div class="kpi-label">Órdenes Registradas</div>
+        <div class="kpi-value">{{ total_ordenes }}</div>
+        <small style="color: var(--slate-600);">En los filtros actuales</small>
     </div>
 
-    <div class="card" style="margin-bottom: 0; padding: 1rem 1.15rem; border-left: 4px solid #f59e0b;">
-        <small style="color: var(--slate-600); font-weight: 700; text-transform: uppercase; font-size: 0.72rem;">Cotizaciones</small>
-        <div style="font-size: 1.45rem; font-weight: 800; color: var(--dark-navy); margin-top: 0.2rem;">
-            {{ total_cotizaciones }}
-        </div>
+    <div class="kpi-card warm">
+        <div class="kpi-label">Cotizaciones</div>
+        <div class="kpi-value" style="color: var(--accent-warm);">{{ total_cotizaciones }}</div>
         <small style="color: var(--success); font-weight: 600;">{{ cotizaciones_aprobadas_count }} aprobadas</small>
     </div>
 </div>
 
 <!-- BARRA DE FILTROS MULTICRITERIO -->
-<div class="card" style="padding: 1rem 1.25rem;">
+<div class="card card-cold" style="padding: 1.15rem 1.25rem;">
     <form method="GET" style="display: flex; flex-direction: column; gap: 0.85rem;">
         <input type="hidden" name="tab" id="inputTabActiva" value="{{ tab_activa }}">
 
@@ -79,7 +71,12 @@
             </div>
 
             <div style="display: flex; gap: 0.5rem;">
-                <button type="submit" class="btn btn-primary" style="flex: 1;">Filtrar</button>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    <span>Filtrar</span>
+                </button>
                 {% if q or fecha_inicio or fecha_fin or estado_orden %}
                     <a href="{% url 'historial_taller' %}" class="btn btn-secondary">Limpiar</a>
                 {% endif %}
@@ -101,6 +98,10 @@
     <button type="button" class="tab-btn {% if tab_activa == 'bodega' %}active{% endif %}" data-tab-target="panelHistBodega" onclick="document.getElementById('inputTabActiva').value='bodega'">
         <span>Salidas de Bodega</span>
         <span class="tab-pill">{{ total_descargas }}</span>
+    </button>
+    <button type="button" class="tab-btn {% if tab_activa == 'constancias' %}active{% endif %}" data-tab-target="panelHistConstancias" onclick="document.getElementById('inputTabActiva').value='constancias'">
+        <span>Constancias Entregadas</span>
+        <span class="tab-pill" style="background: var(--success-bg); color: var(--success);">{{ total_constancias }}</span>
     </button>
 </div>
 
@@ -125,30 +126,34 @@
                 <tbody>
                     {% for srv in page_ordenes %}
                     <tr>
-                        <td><strong>ORD-{{ srv.id|stringformat:"04d" }}</strong></td>
                         <td style="white-space: nowrap;">
+                            <span style="font-size: 0.8rem; font-weight: 700; background: var(--dark-navy); color: var(--white); padding: 0.22rem 0.55rem; border-radius: 6px;">
+                                ORD-{{ srv.id|stringformat:"04d" }}
+                            </span>
+                        </td>
+                        <td style="white-space: nowrap; color: var(--slate-600);">
                             {{ srv.fecha_solicitud|date:"d/m/Y" }}
                             {% if srv.fecha_cierre %}
-                                <small style="display: block; color: var(--success);">Cierre: {{ srv.fecha_cierre|date:"d/m/Y" }}</small>
+                                <small style="display: block; color: var(--success); font-weight: 600;">Cierre: {{ srv.fecha_cierre|date:"d/m/Y" }}</small>
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{% url 'perfil_cliente' srv.cliente.id %}" style="color: var(--primary); font-weight: 600; text-decoration: none;">
+                            <a href="{% url 'perfil_cliente' srv.cliente.id %}" style="color: var(--primary); font-weight: 700; text-decoration: none;">
                                 {{ srv.cliente.nombre }}
                             </a>
-                            <small style="display: block; color: var(--slate-500);">{{ srv.cliente.telefono }}</small>
+                            <small style="display: block; color: var(--slate-600);">{{ srv.cliente.telefono }}</small>
                         </td>
                         <td>
-                            <strong>{{ srv.equipo }}</strong>
+                            <strong style="color: var(--dark-navy);">{{ srv.equipo }}</strong>
                             <small style="display: block; color: var(--slate-600);">{{ srv.descripcion_falla|truncatechars:55 }}</small>
                         </td>
                         <td>
-                            <span class="badge {% if srv.estado == 'completado' %}badge-success{% elif srv.estado == 'en_proceso' %}badge-info{% elif srv.estado == 'cancelado' %}badge-danger{% else %}badge-warning{% endif %}">
+                            <span class="badge {% if srv.estado == 'completado' %}badge-success{% elif srv.estado == 'en_proceso' %}badge-info{% elif srv.estado == 'cancelado' %}badge-danger{% else %}badge-warm{% endif %}">
                                 {{ srv.get_estado_display }}
                             </span>
                         </td>
                         <td style="text-align: right; white-space: nowrap;">
-                            <strong>Q {{ srv.total_reparacion|floatformat:2 }}</strong>
+                            <strong style="color: var(--primary); font-size: 0.96rem;">Q {{ srv.total_reparacion|floatformat:2 }}</strong>
                         </td>
                         <td style="white-space: nowrap;">
                             <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
@@ -167,7 +172,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" style="text-align: center; color: var(--slate-400); padding: 1.5rem;">
+                        <td colspan="7" style="text-align: center; color: var(--slate-400); padding: 2rem;">
                             No se encontraron órdenes con los filtros seleccionados.
                         </td>
                     </tr>
@@ -176,10 +181,9 @@
             </table>
         </div>
 
-        <!-- Paginación Órdenes -->
         {% if page_ordenes.has_other_pages %}
         <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-            <small style="color: var(--slate-600);">Página {{ page_ordenes.number }} de {{ page_ordenes.paginator.num_pages }}</small>
+            <small style="color: var(--slate-600); font-weight: 600;">Página {{ page_ordenes.number }} de {{ page_ordenes.paginator.num_pages }}</small>
             <div style="display: flex; gap: 0.4rem;">
                 {% if page_ordenes.has_previous %}
                     <a href="?tab=ordenes&q={{ q }}&estado={{ estado_orden }}&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}&page_ordenes={{ page_ordenes.previous_page_number }}" class="btn btn-secondary btn-sm">Anterior</a>
@@ -214,40 +218,56 @@
                 <tbody>
                     {% for cot in page_cotizaciones %}
                     <tr>
-                        <td><strong>COT-{{ cot.id|stringformat:"04d" }}</strong></td>
-                        <td style="white-space: nowrap;">{{ cot.fecha|date:"d/m/Y H:i" }}</td>
+                        <td style="white-space: nowrap;">
+                            <span style="font-size: 0.8rem; font-weight: 700; background: var(--dark-navy); color: var(--white); padding: 0.22rem 0.55rem; border-radius: 6px;">
+                                COT-{{ cot.id|stringformat:"04d" }}
+                            </span>
+                        </td>
+                        <td style="white-space: nowrap; color: var(--slate-600);">{{ cot.fecha|date:"d/m/Y H:i" }}</td>
                         <td>
                             {% if cot.cliente %}
-                                <a href="{% url 'perfil_cliente' cot.cliente.id %}" style="color: var(--primary); font-weight: 600; text-decoration: none;">
+                                <a href="{% url 'perfil_cliente' cot.cliente.id %}" style="color: var(--primary); font-weight: 700; text-decoration: none;">
                                     {{ cot.cliente.nombre }}
                                 </a>
                             {% else %}
-                                <strong>{{ cot.nombre_destinatario }}</strong>
+                                <strong style="color: var(--dark-navy);">{{ cot.nombre_destinatario }}</strong>
                             {% endif %}
                         </td>
                         <td>
                             {% if cot.servicio_tecnico %}
                                 <span class="badge badge-info">Orden #{{ cot.servicio_tecnico.id }} &bull; {{ cot.servicio_tecnico.equipo|truncatechars:20 }}</span>
                             {% else %}
-                                <span style="color: var(--slate-500); font-size: 0.85rem;">Mostrador / Venta</span>
+                                <span style="color: var(--slate-600); font-size: 0.85rem;">Mostrador / Venta</span>
                             {% endif %}
                         </td>
                         <td>
-                            <span class="badge {% if cot.estado == 'aprobada' %}badge-success{% elif cot.estado == 'rechazada' %}badge-danger{% else %}badge-warning{% endif %}">
+                            <span class="badge {% if cot.estado == 'aprobada' %}badge-success{% elif cot.estado == 'rechazada' %}badge-danger{% else %}badge-warm{% endif %}">
                                 {{ cot.get_estado_display }}
                             </span>
                         </td>
-                        <td style="text-align: right; white-space: nowrap;"><strong>Q {{ cot.total|floatformat:2 }}</strong></td>
+                        <td style="text-align: right; white-space: nowrap;"><strong style="color: var(--primary); font-size: 0.96rem;">Q {{ cot.total|floatformat:2 }}</strong></td>
                         <td style="white-space: nowrap;">
-                            <div style="display: flex; gap: 0.4rem;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
                                 <button type="button" class="btn btn-secondary btn-sm" data-open-modal="modalHistCot{{ cot.id }}">Ver</button>
                                 <a href="{% url 'descargar_cotizacion_pdf' cot.id %}" class="btn btn-primary btn-sm">PDF</a>
+                                {% if cot.estado == 'pendiente' %}
+                                <form method="POST" action="{% url 'aprobar_cotizacion_orden' cot.id %}"
+                                      onsubmit="return confirm('¿Aprobar COT-{{ cot.id|stringformat:"04d" }}? Se descontarán los repuestos de bodega.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary btn-sm" style="background: var(--success);">Aprobar</button>
+                                </form>
+                                <form method="POST" action="{% url 'rechazar_cotizacion' cot.id %}"
+                                      onsubmit="return confirm('¿Marcar COT-{{ cot.id|stringformat:"04d" }} como rechazada?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger-soft btn-sm">Rechazar</button>
+                                </form>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" style="text-align: center; color: var(--slate-400); padding: 1.5rem;">No hay cotizaciones en este rango.</td>
+                        <td colspan="7" style="text-align: center; color: var(--slate-400); padding: 2rem;">No hay cotizaciones en este rango.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -256,7 +276,7 @@
 
         {% if page_cotizaciones.has_other_pages %}
         <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
-            <small style="color: var(--slate-600);">Página {{ page_cotizaciones.number }} de {{ page_cotizaciones.paginator.num_pages }}</small>
+            <small style="color: var(--slate-600); font-weight: 600;">Página {{ page_cotizaciones.number }} de {{ page_cotizaciones.paginator.num_pages }}</small>
             <div style="display: flex; gap: 0.4rem;">
                 {% if page_cotizaciones.has_previous %}
                     <a href="?tab=cotizaciones&q={{ q }}&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}&page_cot={{ page_cotizaciones.previous_page_number }}" class="btn btn-secondary btn-sm">Anterior</a>
@@ -290,19 +310,23 @@
                 <tbody>
                     {% for d in page_descargas %}
                     <tr>
-                        <td><strong>#{{ d.id|stringformat:"04d" }}</strong></td>
-                        <td style="white-space: nowrap;">{{ d.fecha|date:"d/m/Y H:i" }}</td>
+                        <td style="white-space: nowrap;">
+                            <span style="font-size: 0.8rem; font-weight: 700; background: var(--dark-navy); color: var(--white); padding: 0.22rem 0.55rem; border-radius: 6px;">
+                                #{{ d.id|stringformat:"04d" }}
+                            </span>
+                        </td>
+                        <td style="white-space: nowrap; color: var(--slate-600);">{{ d.fecha|date:"d/m/Y H:i" }}</td>
                         <td>
-                            <span class="badge {% if d.motivo == 'venta' %}badge-success{% elif d.motivo == 'tecnico' %}badge-info{% else %}badge-warning{% endif %}">
+                            <span class="badge {% if d.motivo == 'venta' %}badge-success{% elif d.motivo == 'tecnico' %}badge-info{% else %}badge-warm{% endif %}">
                                 {{ d.get_motivo_display }}
                             </span>
                         </td>
                         <td>
-                            <strong>{{ d.nombre_destinatario }}</strong>
+                            <strong style="color: var(--dark-navy);">{{ d.nombre_destinatario }}</strong>
                             {% if d.servicio_tecnico %}
-                                <small style="display: block; color: var(--primary);">Orden #{{ d.servicio_tecnico.id }} ({{ d.servicio_tecnico.equipo }})</small>
+                                <small style="display: block; color: var(--primary); font-weight: 600;">Orden #{{ d.servicio_tecnico.id }} ({{ d.servicio_tecnico.equipo }})</small>
                             {% elif d.nota_salida %}
-                                <small style="display: block; color: var(--slate-500);">{{ d.nota_salida }}</small>
+                                <small style="display: block; color: var(--slate-600);">{{ d.nota_salida }}</small>
                             {% endif %}
                         </td>
                         <td>
@@ -312,11 +336,11 @@
                                 {% endfor %}
                             </ul>
                         </td>
-                        <td style="text-align: right; white-space: nowrap;"><strong>Q {{ d.total_descontado|floatformat:2 }}</strong></td>
+                        <td style="text-align: right; white-space: nowrap;"><strong style="color: var(--primary); font-size: 0.96rem;">Q {{ d.total_descontado|floatformat:2 }}</strong></td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" style="text-align: center; color: var(--slate-400); padding: 1.5rem;">Sin salidas registradas en este filtro.</td>
+                        <td colspan="6" style="text-align: center; color: var(--slate-400); padding: 2rem;">Sin salidas registradas en este filtro.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -325,13 +349,103 @@
 
         {% if page_descargas.has_other_pages %}
         <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
-            <small style="color: var(--slate-600);">Página {{ page_descargas.number }} de {{ page_descargas.paginator.num_pages }}</small>
+            <small style="color: var(--slate-600); font-weight: 600;">Página {{ page_descargas.number }} de {{ page_descargas.paginator.num_pages }}</small>
             <div style="display: flex; gap: 0.4rem;">
                 {% if page_descargas.has_previous %}
                     <a href="?tab=bodega&q={{ q }}&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}&page_desc={{ page_descargas.previous_page_number }}" class="btn btn-secondary btn-sm">Anterior</a>
                 {% endif %}
                 {% if page_descargas.has_next %}
                     <a href="?tab=bodega&q={{ q }}&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}&page_desc={{ page_descargas.next_page_number }}" class="btn btn-secondary btn-sm">Siguiente</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- =========================================================
+     TAB 4: CONSTANCIAS DE REPARACIÓN ENTREGADAS
+     ========================================================= -->
+<section id="panelHistConstancias" class="tab-panel {% if tab_activa != 'constancias' %}hidden{% endif %}">
+    <div class="card" style="border-top: 3px solid var(--success);">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Constancia / Orden</th>
+                        <th>Fecha Entrega</th>
+                        <th>Cliente</th>
+                        <th>Equipo y Trabajo Realizado</th>
+                        <th style="text-align: right;">Total Cobrado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for srv in page_constancias %}
+                    <tr>
+                        <td style="white-space: nowrap;">
+                            <span style="font-size: 0.8rem; font-weight: 700; background: var(--dark-navy); color: var(--white); padding: 0.22rem 0.55rem; border-radius: 6px;">
+                                ORD-{{ srv.id|stringformat:"04d" }}
+                            </span>
+                            {% if srv.cotizacion %}
+                            <small style="display: block; color: var(--primary); font-weight: 600; margin-top: 0.25rem;">
+                                COT-{{ srv.cotizacion.id|stringformat:"04d" }}
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td style="white-space: nowrap; color: var(--slate-600);">
+                            {% if srv.fecha_cierre %}
+                                <strong style="color: var(--success);">{{ srv.fecha_cierre|date:"d/m/Y H:i" }}</strong>
+                            {% else %}
+                                {{ srv.fecha_solicitud|date:"d/m/Y H:i" }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'perfil_cliente' srv.cliente.id %}" style="color: var(--primary); font-weight: 700; text-decoration: none;">
+                                {{ srv.cliente.nombre }}
+                            </a>
+                            <small style="display: block; color: var(--slate-600);">{{ srv.cliente.telefono }}</small>
+                        </td>
+                        <td>
+                            <strong style="color: var(--dark-navy);">{{ srv.equipo }}</strong>
+                            <small style="display: block; color: var(--slate-600);">
+                                {{ srv.detalle_mano_obra|default:srv.descripcion_falla|truncatechars:60 }}
+                            </small>
+                        </td>
+                        <td style="text-align: right; white-space: nowrap;">
+                            <strong style="color: var(--success); font-size: 0.98rem;">Q {{ srv.total_reparacion|floatformat:2 }}</strong>
+                        </td>
+                        <td style="white-space: nowrap;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                                <button type="button" class="btn btn-secondary btn-sm" data-open-modal="modalHistConst{{ srv.id }}">
+                                    Ver
+                                </button>
+                                <a href="{% url 'descargar_constancia_servicio_pdf' srv.id %}" class="btn btn-primary btn-sm">
+                                    PDF
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--slate-400); padding: 2rem;">
+                            Aún no hay constancias de reparación entregadas en este rango.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_constancias.has_other_pages %}
+        <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <small style="color: var(--slate-600); font-weight: 600;">Página {{ page_constancias.number }} de {{ page_constancias.paginator.num_pages }}</small>
+            <div style="display: flex; gap: 0.4rem;">
+                {% if page_constancias.has_previous %}
+                    <a href="?tab=constancias&q={{ q }}&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}&page_const={{ page_constancias.previous_page_number }}" class="btn btn-secondary btn-sm">Anterior</a>
+                {% endif %}
+                {% if page_constancias.has_next %}
+                    <a href="?tab=constancias&q={{ q }}&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}&page_const={{ page_constancias.next_page_number }}" class="btn btn-secondary btn-sm">Siguiente</a>
                 {% endif %}
             </div>
         </div>
@@ -349,7 +463,7 @@
             <div>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <h2 class="card-title" style="margin-bottom: 0;">Cotización COT-{{ cot.id|stringformat:"04d" }}</h2>
-                    <span class="badge {% if cot.estado == 'aprobada' %}badge-success{% elif cot.estado == 'rechazada' %}badge-danger{% else %}badge-warning{% endif %}">
+                    <span class="badge {% if cot.estado == 'aprobada' %}badge-success{% elif cot.estado == 'rechazada' %}badge-danger{% else %}badge-warm{% endif %}">
                         {{ cot.get_estado_display }}
                     </span>
                 </div>
@@ -378,7 +492,7 @@
                 <tbody>
                     {% for item in cot.items.all %}
                     <tr>
-                        <td style="text-align: center;">{{ item.cantidad }}</td>
+                        <td style="text-align: center;"><strong>{{ item.cantidad }}</strong></td>
                         <td>{{ item.descripcion }}</td>
                         <td style="text-align: right;">Q {{ item.precio_unitario|floatformat:2 }}</td>
                         <td style="text-align: right;">Q {{ item.subtotal|floatformat:2 }}</td>
@@ -386,7 +500,7 @@
                     {% endfor %}
                     {% if cot.costo_mano_obra > 0 %}
                     <tr style="background: var(--primary-light);">
-                        <td style="text-align: center;">1</td>
+                        <td style="text-align: center;"><strong>1</strong></td>
                         <td><strong>Mano de obra técnica</strong></td>
                         <td style="text-align: right;">Q {{ cot.costo_mano_obra|floatformat:2 }}</td>
                         <td style="text-align: right;"><strong>Q {{ cot.costo_mano_obra|floatformat:2 }}</strong></td>
@@ -442,7 +556,7 @@
                         {% for desc in srv.descargas_repuestos.all %}
                             {% for item in desc.detalles.all %}
                             <tr>
-                                <td style="text-align: center;">{{ item.cantidad }}</td>
+                                <td style="text-align: center;"><strong>{{ item.cantidad }}</strong></td>
                                 <td>{{ item.producto.nombre }}</td>
                                 <td style="text-align: right;">Q {{ item.subtotal|floatformat:2 }}</td>
                             </tr>
@@ -450,7 +564,7 @@
                         {% endfor %}
                         {% if srv.costo_mano_obra > 0 %}
                         <tr style="background: var(--primary-light);">
-                            <td style="text-align: center;">1</td>
+                            <td style="text-align: center;"><strong>1</strong></td>
                             <td><strong>Mano de obra técnica</strong></td>
                             <td style="text-align: right;"><strong>Q {{ srv.costo_mano_obra|floatformat:2 }}</strong></td>
                         </tr>

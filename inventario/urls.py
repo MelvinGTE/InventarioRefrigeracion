@@ -20,4 +20,5 @@ urlpatterns = [
     path('servicio-tecnico/<int:servicio_id>/cotizar/', views.cotizar_orden_servicio, name='cotizar_orden_servicio'),
     path('cotizaciones/<int:cotizacion_id>/aprobar/', views.aprobar_cotizacion_orden, name='aprobar_cotizacion_orden'),
     path('historial/', views.historial_taller, name='historial_taller'),
+    path('cotizaciones/<int:cotizacion_id>/rechazar/', views.rechazar_cotizacion, name='rechazar_cotizacion'),
 ]

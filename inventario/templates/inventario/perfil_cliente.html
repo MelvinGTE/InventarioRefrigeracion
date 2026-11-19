@@ -1,13 +1,38 @@
 {% extends 'inventario/base.html' %}
-{% block title %}Perfil de {{ cliente.nombre }} | Inventario Chomin{% endblock %}
+{% block title %}Perfil de {{ cliente.nombre }} | TECNI SOLUTION{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
+        <div style="display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; margin-bottom: 0.25rem;">
+            <span style="font-size: 0.75rem; font-weight: 700; background: var(--dark-navy); color: var(--white); padding: 0.2rem 0.55rem; border-radius: 6px;">
+                EXPEDIENTE CLIENTE
+            </span>
+            <a href="https://wa.me/502{{ cliente.telefono }}" target="_blank" rel="noopener"
+               style="font-size: 0.78rem; font-weight: 700; background: var(--success-bg); color: var(--success); padding: 0.2rem 0.6rem; border-radius: 999px; text-decoration: none;">
+                WhatsApp: {{ cliente.telefono }}
+            </a>
+        </div>
         <h1>{{ cliente.nombre }}</h1>
-        <p>{{ cliente.telefono }} &bull; {{ cliente.direccion }}</p>
+        <p>{{ cliente.direccion }}</p>
     </div>
     <a href="{% url 'clientes' %}" class="btn btn-secondary">Volver a Clientes</a>
+</div>
+
+<!-- Resumen Rápido del Cliente -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-label">Cotizaciones</div>
+        <div class="kpi-value">{{ cotizaciones.count }}</div>
+    </div>
+    <div class="kpi-card warm">
+        <div class="kpi-label">Órdenes Técnicas</div>
+        <div class="kpi-value" style="color: var(--accent-warm);">{{ servicios.count }}</div>
+    </div>
+    <div class="kpi-card" style="border-top: 3px solid var(--success);">
+        <div class="kpi-label">Compras / Salidas</div>
+        <div class="kpi-value" style="color: var(--success);">{{ descargas.count }}</div>
+    </div>
 </div>
 
 <!-- Catálogo para búsqueda rápida de repuestos en reparación -->
@@ -23,15 +48,22 @@
 </datalist>
 
 <!-- 1. Cotizaciones Realizadas -->
-<div class="card">
-    <h2 class="card-title">Cotizaciones Realizadas ({{ cotizaciones.count }})</h2>
+<div class="card card-cold">
+    <h2 class="card-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        <span>Cotizaciones Realizadas ({{ cotizaciones.count }})</span>
+    </h2>
+
     <div class="table-responsive">
         <table>
             <thead>
                 <tr>
                     <th>N.º Cotización</th>
                     <th>Fecha</th>
-                    <th>Validez</th>
+                    <th>Estado</th>
                     <th>Total</th>
                     <th>PDF</th>
                 </tr>
@@ -39,17 +71,25 @@
             <tbody>
                 {% for cot in cotizaciones %}
                 <tr>
-                    <td><strong>COT-{{ cot.id|stringformat:"04d" }}</strong></td>
-                    <td>{{ cot.fecha|date:"d/m/Y H:i" }}</td>
-                    <td>{{ cot.validez }}</td>
-                    <td><span class="badge badge-info">Q {{ cot.total }}</span></td>
+                    <td style="white-space: nowrap;">
+                        <span style="font-size: 0.8rem; font-weight: 700; background: var(--dark-navy); color: var(--white); padding: 0.22rem 0.55rem; border-radius: 6px;">
+                            COT-{{ cot.id|stringformat:"04d" }}
+                        </span>
+                    </td>
+                    <td style="white-space: nowrap; color: var(--slate-600);">{{ cot.fecha|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <span class="badge {% if cot.estado == 'aprobada' %}badge-success{% elif cot.estado == 'rechazada' %}badge-danger{% else %}badge-warm{% endif %}">
+                            {{ cot.get_estado_display }}
+                        </span>
+                    </td>
+                    <td><span class="badge badge-info" style="font-size: 0.85rem;">Q {{ cot.total }}</span></td>
                     <td>
                         <a href="{% url 'descargar_cotizacion_pdf' cot.id %}" class="btn btn-primary btn-sm">Descargar PDF</a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" style="text-align: center; color: var(--slate-400);">Este cliente aún no tiene cotizaciones registradas.</td>
+                    <td colspan="5" style="text-align: center; color: var(--slate-400); padding: 1.75rem;">Este cliente aún no tiene cotizaciones registradas.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -57,84 +97,99 @@
     </div>
 </div>
 
-<!-- 2. Historial de Servicio Técnico con Carga de Repuestos -->
-<div class="card">
-    <h2 class="card-title">Historial de Servicio Técnico ({{ servicios.count }})</h2>
+<!-- 2. Historial de Servicio Técnico -->
+<div class="card card-warm">
+    <h2 class="card-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-warm)" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span>Historial de Servicio Técnico ({{ servicios.count }})</span>
+    </h2>
+
     <div style="display: flex; flex-direction: column; gap: 1rem;">
         {% for srv in servicios %}
-        <div style="border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 1rem; background: var(--bg-surface);">
+        <div style="border: 1px solid var(--slate-200);
+                    border-left: 4px solid {% if srv.estado == 'completado' %}var(--success){% elif srv.estado == 'en_proceso' %}var(--primary){% elif srv.estado == 'cancelado' %}var(--danger){% else %}var(--accent-warm){% endif %};
+                    border-radius: var(--radius-md);
+                    padding: 1.1rem;
+                    background: var(--white);
+                    box-shadow: var(--shadow-sm);">
             <!-- Cabecera de la orden -->
             <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.75rem;">
-                <div>
+                <div style="flex: 1; min-width: 240px;">
                     <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                        <strong style="font-size: 1.05rem;">Orden #{{ srv.id }} &bull; {{ srv.equipo }}</strong>
-                        <span class="badge {% if srv.estado == 'completado' %}badge-success{% elif srv.estado == 'en_proceso' %}badge-info{% else %}badge-warning{% endif %}">
+                        <span style="font-size: 0.78rem; font-weight: 700; background: var(--dark-navy); color: var(--white); padding: 0.2rem 0.55rem; border-radius: 6px;">
+                            ORDEN #{{ srv.id }}
+                        </span>
+                        <strong style="font-size: 1.05rem; color: var(--dark-navy);">{{ srv.equipo }}</strong>
+                        <span class="badge {% if srv.estado == 'completado' %}badge-success{% elif srv.estado == 'en_proceso' %}badge-info{% elif srv.estado == 'cancelado' %}badge-danger{% else %}badge-warm{% endif %}">
                             {{ srv.get_estado_display }}
                         </span>
                     </div>
-                    <p style="font-size: 0.88rem; color: var(--slate-700); margin-top: 0.35rem;">
+                    <p style="font-size: 0.88rem; color: var(--slate-700); margin-top: 0.45rem; background: var(--bg-surface); padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--slate-200);">
                         <strong>Falla:</strong> {{ srv.descripcion_falla }}
                     </p>
-                    <small style="color: var(--slate-600);">
-                        Ingreso: {{ srv.fecha_solicitud|date:"d/m/Y" }}
+                    <small style="display: inline-block; margin-top: 0.45rem; color: var(--slate-600);">
+                        Ingreso: <strong>{{ srv.fecha_solicitud|date:"d/m/Y" }}</strong>
                         {% if srv.fecha_cierre %} &bull; <span style="color: var(--success); font-weight: 600;">Cerrado: {{ srv.fecha_cierre|date:"d/m/Y" }}</span>{% endif %}
                     </small>
                 </div>
 
-                <!-- Controles rápidos: Cargar Repuestos + Cambiar Estado -->
-<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
-    {% if srv.cotizacion %}
-        {% if srv.cotizacion.estado == 'pendiente' %}
-            <a href="{% url 'cotizar_orden_servicio' srv.id %}" class="btn btn-secondary btn-sm">
-                Editar COT-{{ srv.cotizacion.id|stringformat:"04d" }} (Q {{ srv.cotizacion.total }})
-            </a>
-            <form method="POST" action="{% url 'aprobar_cotizacion_orden' srv.cotizacion.id %}"
-                  onsubmit="return confirm('¿Aprobar COT-{{ srv.cotizacion.id|stringformat:"04d" }}? Se descontarán los repuestos de bodega y se iniciará la reparación.');">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-primary btn-sm" style="background: var(--success);">
-                    Aprobar Cotización
-                </button>
-            </form>
-        {% else %}
-            <span class="badge badge-success">COT-{{ srv.cotizacion.id|stringformat:"04d" }} Aprobada</span>
-        {% endif %}
-    {% else %}
-        <a href="{% url 'cotizar_orden_servicio' srv.id %}" class="btn btn-primary btn-sm">
-            Cotizar Orden
-        </a>
-    {% endif %}
+                <!-- Controles rápidos: Cotizar / Aprobar / Cambiar Estado -->
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                    {% if srv.cotizacion %}
+                        {% if srv.cotizacion.estado == 'pendiente' %}
+                            <a href="{% url 'cotizar_orden_servicio' srv.id %}" class="btn btn-secondary btn-sm">
+                                Editar COT-{{ srv.cotizacion.id|stringformat:"04d" }} (Q {{ srv.cotizacion.total }})
+                            </a>
+                            <form method="POST" action="{% url 'aprobar_cotizacion_orden' srv.cotizacion.id %}"
+                                  onsubmit="return confirm('¿Aprobar COT-{{ srv.cotizacion.id|stringformat:"04d" }}? Se descontarán los repuestos de bodega y se iniciará la reparación.');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-sm" style="background: var(--success);">
+                                    Aprobar Cotización
+                                </button>
+                            </form>
+                        {% else %}
+                            <span class="badge badge-success">COT-{{ srv.cotizacion.id|stringformat:"04d" }} Aprobada</span>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'cotizar_orden_servicio' srv.id %}" class="btn btn-primary btn-sm">
+                            Cotizar Orden
+                        </a>
+                    {% endif %}
 
-    {% if srv.estado == 'completado' %}
-        <a href="{% url 'descargar_constancia_servicio_pdf' srv.id %}" target="_blank" class="btn btn-secondary btn-sm">
-            Ver Constancia PDF
-        </a>
-    {% endif %}
+                    {% if srv.estado == 'completado' %}
+                        <a href="{% url 'descargar_constancia_servicio_pdf' srv.id %}" target="_blank" class="btn btn-secondary btn-sm">
+                            Ver Constancia PDF
+                        </a>
+                    {% endif %}
 
-    <form method="POST" action="{% url 'actualizar_estado_servicio' srv.id %}" style="min-width: 215px;">
-        {% csrf_token %}
-        <select name="estado" class="form-control" style="min-height: 36px; padding: 0.3rem 0.65rem; font-size: 0.85rem;" onchange="this.form.submit()">
-            <option value="pendiente" {% if srv.estado == 'pendiente' %}selected{% endif %}>Pendiente de revisión</option>
-            <option value="esperando_aprobacion" {% if srv.estado == 'esperando_aprobacion' %}selected{% endif %}>Esperando aprobación de cotización</option>
-            <option value="en_proceso" {% if srv.estado == 'en_proceso' %}selected{% endif %}>En reparación</option>
-            <option value="completado" {% if srv.estado == 'completado' %}selected{% endif %}>Completado / Entregado</option>
-            <option value="cancelado" {% if srv.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
-        </select>
-    </form>
-</div>
+                    <form method="POST" action="{% url 'actualizar_estado_servicio' srv.id %}" style="min-width: 215px;">
+                        {% csrf_token %}
+                        <select name="estado" class="form-control" style="min-height: 36px; padding: 0.3rem 0.65rem; font-size: 0.85rem; font-weight: 600;" onchange="this.form.submit()">
+                            <option value="pendiente" {% if srv.estado == 'pendiente' %}selected{% endif %}>Pendiente de revisión</option>
+                            <option value="esperando_aprobacion" {% if srv.estado == 'esperando_aprobacion' %}selected{% endif %}>Esperando aprobación de cotización</option>
+                            <option value="en_proceso" {% if srv.estado == 'en_proceso' %}selected{% endif %}>En reparación</option>
+                            <option value="completado" {% if srv.estado == 'completado' %}selected{% endif %}>Completado / Entregado</option>
+                            <option value="cancelado" {% if srv.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                        </select>
+                    </form>
+                </div>
             </div>
 
             <!-- Repuestos ya utilizados en esta orden (vinculados a DescargaInventario) -->
             {% if srv.descargas_repuestos.all %}
-            <div style="margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--slate-200);">
-                <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-600); text-transform: uppercase; margin-bottom: 0.4rem;">
+            <div style="margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--slate-200);">
+                <div style="font-size: 0.78rem; font-weight: 700; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.45rem;">
                     Repuestos utilizados (Descontados de inventario):
                 </div>
-                <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.88rem;">
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.88rem;">
                     {% for desc in srv.descargas_repuestos.all %}
                         {% for item in desc.detalles.all %}
-                        <li style="display: flex; justify-content: space-between; align-items: center; background: var(--white); padding: 0.45rem 0.75rem; border-radius: 8px; border: 1px solid var(--slate-200);">
+                        <li style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 0.45rem 0.75rem; border-radius: 8px; border: 1px solid var(--slate-200);">
                             <span>
-                                <st>{{ item.cantidad }}x</st    rong> {{ item.producto.nombre }}
+                                <strong>{{ item.cantidad }}x</strong> {{ item.producto.nombre }}
                                 <small style="color: var(--slate-400);">(Salida #{{ desc.id|stringformat:"04d" }} &bull; {{ desc.fecha|date:"d/m/Y" }})</small>
                             </span>
                             <strong style="color: var(--primary);">Q {{ item.subtotal }}</strong>
@@ -146,8 +201,78 @@
             {% endif %}
         </div>
         {% empty %}
-        <p style="text-align: center; color: var(--slate-400); padding: 1rem;">No hay solicitudes de servicio técnico para este cliente.</p>
+        <p style="text-align: center; color: var(--slate-400); padding: 1.5rem;">No hay solicitudes de servicio técnico para este cliente.</p>
         {% endfor %}
+    </div>
+</div>
+
+<!-- 3. Compras en Mostrador y Salidas de Bodega -->
+<div class="card" style="border-top: 3px solid var(--success);">
+    <h2 class="card-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.2">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span>Compras en Mostrador y Repuestos Entregados ({{ descargas.count }})</span>
+    </h2>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Salida</th>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Repuestos Adquiridos</th>
+                    <th style="text-align: right;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for desc in descargas %}
+                <tr>
+                    <td style="white-space: nowrap;">
+                        <span style="font-size: 0.8rem; font-weight: 700; background: var(--dark-navy); color: var(--white); padding: 0.22rem 0.55rem; border-radius: 6px;">
+                            #{{ desc.id|stringformat:"04d" }}
+                        </span>
+                    </td>
+                    <td style="white-space: nowrap; color: var(--slate-600);">{{ desc.fecha|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <span class="badge {% if desc.motivo == 'venta' %}badge-success{% elif desc.motivo == 'tecnico' %}badge-info{% else %}badge-warm{% endif %}">
+                            {{ desc.get_motivo_display }}
+                        </span>
+                        {% if desc.servicio_tecnico %}
+                            <small style="display: block; color: var(--primary); font-weight: 600; margin-top: 0.2rem;">
+                                Orden #{{ desc.servicio_tecnico.id }}
+                                {% if desc.servicio_tecnico.cotizacion %} &bull; COT-{{ desc.servicio_tecnico.cotizacion.id|stringformat:"04d" }}{% endif %}
+                            </small>
+                        {% elif desc.nota_salida %}
+                            <small style="display: block; color: var(--slate-600); margin-top: 0.2rem;">
+                                {{ desc.nota_salida }}
+                            </small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.86rem;">
+                            {% for item in desc.detalles.all %}
+                            <li>
+                                <strong>{{ item.cantidad }}x</strong> {{ item.producto.nombre }}
+                                <span style="color: var(--slate-600);">(Q {{ item.precio_unitario }} c/u &rarr; Q {{ item.subtotal }})</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <strong style="color: var(--success); font-size: 0.96rem;">Q {{ desc.total_descontado|floatformat:2 }}</strong>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--slate-400); padding: 1.75rem;">Este cliente aún no tiene compras directas en mostrador registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

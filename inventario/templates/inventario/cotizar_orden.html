@@ -1,12 +1,19 @@
 {% extends 'inventario/base.html' %}
-{% block title %}Cotizar Orden #{{ servicio.id }} | Inventario Chomin{% endblock %}
+{% block title %}Cotizar Orden #{{ servicio.id }} | TECNI SOLUTION{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
+        <div style="display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; margin-bottom: 0.25rem;">
+            <span style="font-size: 0.78rem; font-weight: 700; background: var(--dark-navy); color: var(--white); padding: 0.22rem 0.6rem; border-radius: 6px;">
+                ORDEN #{{ servicio.id }}
+            </span>
+            {% if cotizacion %}
+            <span class="badge badge-warm">COT-{{ cotizacion.id|stringformat:"04d" }}</span>
+            {% endif %}
+        </div>
         <h1>
-            {% if cotizacion %}Editar Cotización COT-{{ cotizacion.id|stringformat:"04d" }}{% else %}Cotizar Reparación{% endif %}
-            &bull; Orden #{{ servicio.id }}
+            {% if cotizacion %}Editar Cotización de Reparación{% else %}Cotizar Reparación Técnica{% endif %}
         </h1>
         <p>Cliente: <strong>{{ servicio.cliente.nombre }}</strong> &bull; Equipo: <strong>{{ servicio.equipo }}</strong></p>
     </div>
@@ -21,9 +28,11 @@
 </div>
 
 <!-- Ficha de referencia de la falla -->
-<div class="card" style="background: var(--bg-surface); border-left: 4px solid var(--primary); padding: 1rem 1.25rem;">
-    <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Falla Reportada en Orden #{{ servicio.id }}</div>
-    <p style="font-size: 0.92rem; color: var(--slate-800); margin-top: 0.25rem;">{{ servicio.descripcion_falla }}</p>
+<div class="card" style="background: var(--white); border-left: 4px solid var(--accent-warm); padding: 1.05rem 1.25rem;">
+    <div style="font-size: 0.76rem; font-weight: 700; color: var(--accent-warm-hover); text-transform: uppercase; letter-spacing: 0.03em;">
+        Falla Reportada en Orden #{{ servicio.id }}
+    </div>
+    <p style="font-size: 0.94rem; color: var(--dark-navy); margin-top: 0.3rem; font-weight: 500;">{{ servicio.descripcion_falla }}</p>
 </div>
 
 <!-- Catálogo de repuestos activos -->
@@ -38,11 +47,11 @@
     {% endfor %}
 </datalist>
 
-<div class="card">
+<div class="card card-cold">
     <form method="POST" id="formCotizarOrden">
         {% csrf_token %}
 
-        <div class="form-grid cols-2" style="margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--slate-200); align-items: start;">
+        <div class="form-grid cols-2" style="margin-bottom: 1.35rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--slate-200); align-items: start;">
             <div class="form-group">
                 <label for="descripcion_trabajo">Descripción del trabajo a realizar *</label>
                 <textarea id="descripcion_trabajo"
@@ -53,7 +62,7 @@
                           required>{{ cotizacion.descripcion_trabajo|default_if_none:'' }}</textarea>
             </div>
             <div class="form-group">
-                <label for="costo_mano_obra">Costo de Mano de Obra (Q) *</label>
+                <label for="costo_mano_obra">Costo de Mano de Obra Base (Q) *</label>
                 <div class="currency-wrapper">
                     <span class="currency-prefix">Q</span>
                     <input type="number"
@@ -65,29 +74,24 @@
                            value="{{ cotizacion.costo_mano_obra|default:'0.00'|stringformat:'.2f' }}"
                            required>
                 </div>
-                <small style="font-size: 0.76rem; color: var(--slate-600);">Se sumará automáticamente al total de repuestos.</small>
+                <small style="font-size: 0.76rem; color: var(--slate-600);">Se sumará automáticamente al total de repuestos e ítems adicionales.</small>
             </div>
         </div>
-
-        <h3 class="card-title">Repuestos Cotizados</h3>
-
-
 
         <h3 class="card-title">Repuestos y Mano de Obra Cotizados</h3>
         <div id="listaItemsOrdenCot" style="display: flex; flex-direction: column; gap: 0.85rem;">
             {% if cotizacion and cotizacion.items.all %}
                 {% for item in cotizacion.items.all %}
-                <div class="orden-cot-row" style="background: var(--bg-surface); padding: 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+                <div class="orden-cot-row" style="background: var(--bg-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200); border-left: 3.5px solid var(--primary);">
                     <div class="form-grid cols-3" style="align-items: end;">
                         <div class="form-group">
-                            <label>Repuesto del catálogo o descripción de mano de obra *</label>
+                            <label>Repuesto del catálogo o descripción de servicio *</label>
                             <input type="text"
                                    name="descripcion[]"
                                    list="catalogoCotOrden"
                                    class="form-control oc-input-desc"
                                    value="{{ item.descripcion }}"
-                                   autocomplete="off"
-                                   >
+                                   autocomplete="off">
                             <input type="hidden" name="producto_id[]" class="oc-hidden-prod" value="{{ item.producto.id|default:'' }}">
                             <input type="hidden" name="tipo_item[]" class="oc-hidden-tipo" value="{% if item.es_mano_obra %}mano_obra{% else %}repuesto{% endif %}">
                             <small class="oc-hint" style="font-size: 0.76rem; color: var(--slate-600); min-height: 1rem;">
@@ -129,17 +133,16 @@
                 {% endfor %}
             {% else %}
                 <!-- Fila inicial vacía -->
-                <div class="orden-cot-row" style="background: var(--bg-surface); padding: 0.95rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+                <div class="orden-cot-row" style="background: var(--bg-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200); border-left: 3.5px solid var(--primary);">
                     <div class="form-grid cols-3" style="align-items: end;">
                         <div class="form-group">
-                            <label>Repuesto del catálogo o descripción de mano de obra *</label>
+                            <label>Repuesto del catálogo o descripción de servicio *</label>
                             <input type="text"
                                    name="descripcion[]"
                                    list="catalogoCotOrden"
                                    class="form-control oc-input-desc"
                                    placeholder="Ej. Compresor R134 o Mano de obra reparación..."
-                                   autocomplete="off"
-                                   >
+                                   autocomplete="off">
                             <input type="hidden" name="producto_id[]" class="oc-hidden-prod">
                             <input type="hidden" name="tipo_item[]" class="oc-hidden-tipo" value="mano_obra">
                             <small class="oc-hint" style="font-size: 0.76rem; color: var(--slate-600); min-height: 1rem;"></small>
@@ -186,7 +189,7 @@
         <div class="summary-box">
             <div>
                 <span style="font-size: 0.85rem; color: var(--slate-600); display: block;">Total Cotizado de Reparación</span>
-                <strong style="font-size: 0.9rem;">No descuenta stock hasta que el cliente apruebe</strong>
+                <strong style="font-size: 0.9rem; color: var(--dark-navy);">No descuenta stock hasta que el cliente apruebe</strong>
             </div>
             <div class="summary-total" id="totalOrdenCot">Q {{ cotizacion.total|default:'0.00'|floatformat:2 }}</div>
         </div>
@@ -196,7 +199,12 @@
                 Guardar Cotización
             </button>
             <button type="submit" name="accion" value="guardar_pdf" class="btn btn-primary">
-                Guardar y Descargar PDF
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Guardar y Descargar PDF</span>
             </button>
         </div>
     </form>
