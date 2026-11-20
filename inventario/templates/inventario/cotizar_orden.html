@@ -51,30 +51,44 @@
     <form method="POST" id="formCotizarOrden">
         {% csrf_token %}
 
-        <div class="form-grid cols-2" style="margin-bottom: 1.35rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--slate-200); align-items: start;">
+        <div class="form-grid cols-2" style="margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--slate-200); align-items: start;">
             <div class="form-group">
                 <label for="descripcion_trabajo">Descripción del trabajo a realizar *</label>
                 <textarea id="descripcion_trabajo"
                           name="descripcion_trabajo"
                           class="form-control"
-                          rows="2"
+                          rows="3"
                           placeholder="Ej. Cambio de compresor, carga de refrigerante, vacío y soldadura..."
                           required>{{ cotizacion.descripcion_trabajo|default_if_none:'' }}</textarea>
             </div>
-            <div class="form-group">
-                <label for="costo_mano_obra">Costo de Mano de Obra Base (Q) *</label>
-                <div class="currency-wrapper">
-                    <span class="currency-prefix">Q</span>
-                    <input type="number"
-                           id="costo_mano_obra"
-                           name="costo_mano_obra"
+
+            <div class="form-grid" style="gap: 0.85rem;">
+                <div class="form-group">
+                    <label for="costo_mano_obra">Costo de Mano de Obra Base (Q) *</label>
+                    <div class="currency-wrapper">
+                        <span class="currency-prefix">Q</span>
+                        <input type="number"
+                               id="costo_mano_obra"
+                               name="costo_mano_obra"
+                               class="form-control"
+                               step="0.01"
+                               min="0"
+                               value="{{ cotizacion.costo_mano_obra|default:'0.00'|stringformat:'.2f' }}"
+                               required>
+                    </div>
+                    <small style="font-size: 0.76rem; color: var(--slate-600);">Se sumará automáticamente al total de repuestos e ítems adicionales.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="validez">Validez de la oferta *</label>
+                    <input type="text"
+                           id="validez"
+                           name="validez"
                            class="form-control"
-                           step="0.01"
-                           min="0"
-                           value="{{ cotizacion.costo_mano_obra|default:'0.00'|stringformat:'.2f' }}"
+                           value="{{ cotizacion.validez|default:'15 días calendario' }}"
+                           placeholder="Ej. 15 días calendario / 8 días"
                            required>
                 </div>
-                <small style="font-size: 0.76rem; color: var(--slate-600);">Se sumará automáticamente al total de repuestos e ítems adicionales.</small>
             </div>
         </div>
 

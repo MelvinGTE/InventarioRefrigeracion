@@ -274,7 +274,7 @@ def _construir_banner_documento(doc_tipo, folio, fecha_texto, extra_badge=None):
 
 
 # ==============================================================================
-# 1. CARGAR PRODUCTOS AL INVENTARIO
+# 1. CARGAR, EDITAR, DAR DE BAJA Y DAR DE ALTA PRODUCTOS EN EL INVENTARIO
 # ==============================================================================
 @login_required
 def cargar_producto(request):
@@ -297,7 +297,64 @@ def cargar_producto(request):
             return redirect('cargar_producto')
 
     productos = Producto.objects.filter(activo=True).order_by('-fecha_creacion')
-    return render(request, 'inventario/cargar_producto.html', {'productos': productos})
+    productos_baja = Producto.objects.filter(activo=False).order_by('-fecha_creacion')
+    return render(request, 'inventario/cargar_producto.html', {
+        'productos': productos,
+        'productos_baja': productos_baja,
+    })
+
+
+@login_required
+def editar_producto(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id, activo=True)
+
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip()
+        cantidad = int(request.POST.get('cantidad', producto.cantidad))
+        precio = Decimal(request.POST.get('precio', producto.precio))
+        nueva_foto = request.FILES.get('foto')
+        eliminar_foto = request.POST.get('eliminar_foto') == 'on'
+
+        if nombre and cantidad >= 0:
+            producto.nombre = nombre
+            producto.descripcion = descripcion
+            producto.cantidad = cantidad
+            producto.precio = precio
+
+            if eliminar_foto and producto.foto:
+                producto.foto.delete(save=False)
+                producto.foto = None
+            elif nueva_foto:
+                if producto.foto:
+                    producto.foto.delete(save=False)
+                producto.foto = nueva_foto
+
+            producto.save()
+            messages.success(request, f'Repuesto "{producto.nombre}" actualizado correctamente.')
+            return redirect('cargar_producto')
+
+    return render(request, 'inventario/editar_producto.html', {'producto': producto})
+
+
+@login_required
+def dar_baja_producto(request, producto_id):
+    if request.method == 'POST':
+        producto = get_object_or_404(Producto, id=producto_id, activo=True)
+        producto.activo = False
+        producto.save()
+        messages.success(request, f'Repuesto "{producto.nombre}" dado de baja del inventario activo.')
+    return redirect('cargar_producto')
+
+
+@login_required
+def dar_alta_producto(request, producto_id):
+    if request.method == 'POST':
+        producto = get_object_or_404(Producto, id=producto_id, activo=False)
+        producto.activo = True
+        producto.save()
+        messages.success(request, f'Repuesto "{producto.nombre}" reactivado en el inventario.')
+    return redirect('cargar_producto')
 
 
 # ==============================================================================
@@ -411,7 +468,9 @@ def construir_pdf_cotizacion(cotizacion):
         rightMargin=40,
         leftMargin=40,
         topMargin=36,
-        bottomMargin=48
+        bottomMargin=48,
+        title=f"Cotización COT-{cotizacion.id:04d} - {cotizacion.nombre_destinatario}",
+        author="TECNI SOLUTION"
     )
     styles = getSampleStyleSheet()
     elements = []
@@ -553,7 +612,8 @@ def construir_pdf_cotizacion(cotizacion):
             f"Q {cotizacion.costo_mano_obra:,.2f}"
         ])
 
-    filas_tabla.append(['', '', 'TOTAL COTIZADO:', f"Q {cotizacion.total:,.2f}"])
+    # Columna 1 recibe el texto y se combina (SPAN) con la columna 2
+    filas_tabla.append(['', 'TOTAL COTIZADO:', '', f"Q {cotizacion.total:,.2f}"])
 
     tabla = Table(filas_tabla, colWidths=[45, 317, 85, 85], repeatRows=1)
     estilos_tabla = [
@@ -562,22 +622,24 @@ def construir_pdf_cotizacion(cotizacion):
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, 0), 8.2),
         ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+        ('ALIGN', (1, -1), (2, -1), 'RIGHT'),
         ('ALIGN', (2, 0), (-1, -1), 'RIGHT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTSIZE', (0, 1), (-1, -2), 9),
         ('GRID', (0, 0), (-1, -2), 0.5, BRAND_BORDER),
         ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, BRAND_SURFACE]),
-        ('BACKGROUND', (2, -1), (-1, -1), BRAND_COLD_LIGHT),
-        ('BOX', (2, -1), (-1, -1), 0.8, BRAND_COLD),
-        ('LINEABOVE', (2, -1), (-1, -1), 2, BRAND_COLD),
-        ('FONTNAME', (2, -1), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (2, -1), (2, -1), 9),
+        ('SPAN', (1, -1), (2, -1)),
+        ('BACKGROUND', (1, -1), (-1, -1), BRAND_COLD_LIGHT),
+        ('BOX', (1, -1), (-1, -1), 0.8, BRAND_COLD),
+        ('LINEABOVE', (1, -1), (-1, -1), 2, BRAND_COLD),
+        ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (1, -1), (2, -1), 9),
         ('FONTSIZE', (3, -1), (3, -1), 10.5),
-        ('TEXTCOLOR', (2, -1), (-1, -1), BRAND_COLD_DARK),
+        ('TEXTCOLOR', (1, -1), (-1, -1), BRAND_COLD_DARK),
         ('TOPPADDING', (0, 0), (-1, -1), 8),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
     ]
     tabla.setStyle(TableStyle(estilos_tabla))
     elements.append(tabla)
@@ -807,50 +869,6 @@ def actualizar_estado_servicio(request, servicio_id):
 
 
 @login_required
-def editar_producto(request, producto_id):
-    producto = get_object_or_404(Producto, id=producto_id, activo=True)
-
-    if request.method == 'POST':
-        nombre = request.POST.get('nombre', '').strip()
-        descripcion = request.POST.get('descripcion', '').strip()
-        cantidad = int(request.POST.get('cantidad', producto.cantidad))
-        precio = Decimal(request.POST.get('precio', producto.precio))
-        nueva_foto = request.FILES.get('foto')
-        eliminar_foto = request.POST.get('eliminar_foto') == 'on'
-
-        if nombre and cantidad >= 0:
-            producto.nombre = nombre
-            producto.descripcion = descripcion
-            producto.cantidad = cantidad
-            producto.precio = precio
-
-            if eliminar_foto and producto.foto:
-                producto.foto.delete(save=False)
-                producto.foto = None
-            elif nueva_foto:
-                if producto.foto:
-                    producto.foto.delete(save=False)
-                producto.foto = nueva_foto
-
-            producto.save()
-            messages.success(request, f'Repuesto "{producto.nombre}" actualizado correctamente.')
-            return redirect('cargar_producto')
-
-    return render(request, 'inventario/editar_producto.html', {'producto': producto})
-
-
-# --- DAR DE BAJA PRODUCTO ---
-@login_required
-def dar_baja_producto(request, producto_id):
-    if request.method == 'POST':
-        producto = get_object_or_404(Producto, id=producto_id, activo=True)
-        producto.activo = False
-        producto.save()
-        messages.success(request, f'Repuesto "{producto.nombre}" dado de baja del inventario activo.')
-    return redirect('cargar_producto')
-
-
-@login_required
 def cargar_repuestos_servicio(request, servicio_id):
     servicio = get_object_or_404(ServicioTecnico.objects.select_related('cliente'), id=servicio_id)
 
@@ -956,7 +974,9 @@ def descargar_constancia_servicio_pdf(request, servicio_id):
         rightMargin=40,
         leftMargin=40,
         topMargin=36,
-        bottomMargin=48
+        bottomMargin=48,
+        title=f"Constancia de Reparación ORD-{servicio.id:04d} - {cliente.nombre}",
+        author="TECNI SOLUTION"
     )
     styles = getSampleStyleSheet()
     elements = []
@@ -1128,7 +1148,8 @@ def descargar_constancia_servicio_pdf(request, servicio_id):
     if not tiene_items:
         filas_costos.append(['-', 'Sin cargos de repuestos ni mano de obra registrados.', 'Q 0.00', 'Q 0.00'])
 
-    filas_costos.append(['', '', 'TOTAL SERVICIO:', f"Q {servicio.total_reparacion:,.2f}"])
+    # Columna 1 recibe el texto y se combina (SPAN) con la columna 2
+    filas_costos.append(['', 'TOTAL SERVICIO:', '', f"Q {servicio.total_reparacion:,.2f}"])
 
     tabla_costos = Table(filas_costos, colWidths=[45, 317, 85, 85], repeatRows=1)
     tabla_costos.setStyle(TableStyle([
@@ -1137,22 +1158,24 @@ def descargar_constancia_servicio_pdf(request, servicio_id):
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, 0), 8.2),
         ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+        ('ALIGN', (1, -1), (2, -1), 'RIGHT'),
         ('ALIGN', (2, 0), (-1, -1), 'RIGHT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTSIZE', (0, 1), (-1, -2), 9),
         ('GRID', (0, 0), (-1, -2), 0.5, BRAND_BORDER),
         ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, BRAND_SURFACE]),
-        ('BACKGROUND', (2, -1), (-1, -1), BRAND_COLD_LIGHT),
-        ('BOX', (2, -1), (-1, -1), 0.8, BRAND_COLD),
-        ('LINEABOVE', (2, -1), (-1, -1), 2, BRAND_COLD),
-        ('FONTNAME', (2, -1), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (2, -1), (2, -1), 9),
+        ('SPAN', (1, -1), (2, -1)),
+        ('BACKGROUND', (1, -1), (-1, -1), BRAND_COLD_LIGHT),
+        ('BOX', (1, -1), (-1, -1), 0.8, BRAND_COLD),
+        ('LINEABOVE', (1, -1), (-1, -1), 2, BRAND_COLD),
+        ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (1, -1), (2, -1), 9),
         ('FONTSIZE', (3, -1), (3, -1), 10.5),
-        ('TEXTCOLOR', (2, -1), (-1, -1), BRAND_COLD_DARK),
+        ('TEXTCOLOR', (1, -1), (-1, -1), BRAND_COLD_DARK),
         ('TOPPADDING', (0, 0), (-1, -1), 8),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
     ]))
     elements.append(tabla_costos)
     elements.append(Spacer(1, 18))
@@ -1426,7 +1449,6 @@ def rechazar_cotizacion(request, cotizacion_id):
     return redirect(request.META.get('HTTP_REFERER', 'cotizaciones'))
 
 
-
 # ==============================================================================
 # 5. HISTORIAL GENERAL Y BITÁCORA DEL TALLER
 # ==============================================================================
@@ -1488,7 +1510,6 @@ def historial_taller(request):
     if estado_orden:
         qs_servicios = qs_servicios.filter(estado=estado_orden)
 
-    # Constancias entregadas (fuera de los if para que siempre exista y respete todos los filtros)
     qs_constancias = qs_servicios.filter(estado='completado')
 
     servicios_completados = [s for s in qs_servicios if s.estado == 'completado']

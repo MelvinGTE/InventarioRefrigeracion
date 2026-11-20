@@ -665,4 +665,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         recalcularOrdenCot();
     }
+
+
+    // =========================================================
+    // 11. VISOR DE ZOOM PARA FOTOGRAFÍAS DE REPUESTOS
+    // =========================================================
+    const modalZoomFoto = document.getElementById('modalZoomFoto');
+    const zoomFotoImg = document.getElementById('zoomFotoImg');
+    const zoomFotoTitulo = document.getElementById('zoomFotoTitulo');
+
+    if (modalZoomFoto && zoomFotoImg) {
+        document.addEventListener('click', (e) => {
+            const thumb = e.target.closest('[data-zoom-img]');
+            if (thumb) {
+                e.stopPropagation();
+                zoomFotoImg.src = thumb.dataset.zoomImg;
+                if (zoomFotoTitulo) {
+                    zoomFotoTitulo.textContent = thumb.dataset.zoomTitle || 'Fotografía del repuesto';
+                }
+                modalZoomFoto.classList.remove('hidden');
+            }
+        });
+    }
 });
