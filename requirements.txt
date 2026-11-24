@@ -5,4 +5,3 @@ mysql-connector-python==9.7.0
 pillow==12.2.0
 requests==2.34.2
 urllib3==2.7.0
-vboxapi==1.0
