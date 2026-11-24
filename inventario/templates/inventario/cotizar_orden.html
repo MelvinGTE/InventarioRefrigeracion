@@ -64,7 +64,7 @@
 
             <div class="form-grid" style="gap: 0.85rem;">
                 <div class="form-group">
-                    <label for="costo_mano_obra">Costo de servicio Base (Q) *</label>
+                    <label for="costo_mano_obra">Costo de servicio técnico base (Q) *</label>
                     <div class="currency-wrapper">
                         <span class="currency-prefix">Q</span>
                         <input type="number"
@@ -76,7 +76,7 @@
                                value="{{ cotizacion.costo_mano_obra|default:'0.00'|stringformat:'.2f' }}"
                                required>
                     </div>
-                    <small style="font-size: 0.76rem; color: var(--slate-600);">Se sumará automáticamente al total de repuestos e ítems adicionales.</small>
+                    <small style="font-size: 0.76rem; color: var(--slate-600);">Se sumará automáticamente al total de repuestos y servicios adicionales.</small>
                 </div>
 
                 <div class="form-group">
@@ -92,7 +92,7 @@
             </div>
         </div>
 
-        <h3 class="card-title">Repuestos y costo de servicio Cotizados</h3>
+        <h3 class="card-title">Repuestos y Servicio Técnico Cotizados</h3>
         <div id="listaItemsOrdenCot" style="display: flex; flex-direction: column; gap: 0.85rem;">
             {% if cotizacion and cotizacion.items.all %}
                 {% for item in cotizacion.items.all %}
@@ -109,7 +109,7 @@
                             <input type="hidden" name="producto_id[]" class="oc-hidden-prod" value="{{ item.producto.id|default:'' }}">
                             <input type="hidden" name="tipo_item[]" class="oc-hidden-tipo" value="{% if item.es_mano_obra %}mano_obra{% else %}repuesto{% endif %}">
                             <small class="oc-hint" style="font-size: 0.76rem; color: var(--slate-600); min-height: 1rem;">
-                                {% if item.producto %}Repuesto en inventario (Stock: {{ item.producto.cantidad }}){% else %}Servicio / costo de servicio{% endif %}
+                                {% if item.producto %}Repuesto en inventario (Stock: {{ item.producto.cantidad }}){% else %}Servicio técnico especializado{% endif %}
                             </small>
                         </div>
 
@@ -155,7 +155,7 @@
                                    name="descripcion[]"
                                    list="catalogoCotOrden"
                                    class="form-control oc-input-desc"
-                                   placeholder="Ej. Compresor R134 o costo de servicio reparación..."
+                                   placeholder="Ej. Compresor R134a o servicio técnico de reparación..."
                                    autocomplete="off">
                             <input type="hidden" name="producto_id[]" class="oc-hidden-prod">
                             <input type="hidden" name="tipo_item[]" class="oc-hidden-tipo" value="mano_obra">
@@ -197,7 +197,7 @@
         </div>
 
         <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.6rem;">
-            <button type="button" id="btnAddLineaOrdenCot" class="btn btn-secondary">+ Agregar repuesto o costo de servicio</button>
+            <button type="button" id="btnAddLineaOrdenCot" class="btn btn-secondary">+ Agregar repuesto o servicio técnico</button>
         </div>
 
         <div class="summary-box">

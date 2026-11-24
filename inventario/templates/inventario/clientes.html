@@ -5,7 +5,7 @@
 <div class="page-header">
     <div>
         <h1>Clientes y Servicio Técnico</h1>
-        <p>Gestiona órdenes de climatización, repuestos consumidos, mano de obra y directorio de clientes.</p>
+        <p>Gestiona órdenes de climatización, repuestos consumidos, servicio técnico y directorio de clientes.</p>
     </div>
     <div style="display: flex; flex-wrap: wrap; gap: 0.65rem;">
         <button type="button" class="btn btn-secondary" data-open-modal="modalNuevoCliente">
@@ -180,7 +180,7 @@
                     </div>
                 </div>
 
-                <!-- Desglose de Repuestos y Mano de Obra ya registrados -->
+                <!-- Desglose de Repuestos y Servicio Técnico ya registrados -->
                 {% if srv.descargas_repuestos.all or srv.costo_mano_obra > 0 %}
                 <div style="margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--slate-200);">
                     <div style="font-size: 0.76rem; font-weight: 700; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.45rem;">
@@ -202,7 +202,7 @@
                         {% if srv.costo_mano_obra > 0 %}
                         <li style="display: flex; justify-content: space-between; align-items: center; background: var(--primary-light); padding: 0.48rem 0.75rem; border-radius: 8px; border: 1px solid #bae6fd;">
                             <span>
-                                <strong>Mano de obra técnica</strong>
+                                <strong>Servicio técnico especializado</strong>
                                 {% if srv.detalle_mano_obra %}<small style="color: var(--slate-700);">— {{ srv.detalle_mano_obra }}</small>{% endif %}
                             </span>
                             <strong style="color: var(--primary-hover);">Q {{ srv.costo_mano_obra }}</strong>
@@ -212,10 +212,10 @@
                 </div>
                 {% endif %}
 
-                <!-- Panel Desplegable para Repuestos y Mano de Obra -->
+                <!-- Panel Desplegable para Repuestos y Servicio Técnico -->
                 <div id="panelRepuestosSrv{{ srv.id }}" class="hidden" style="margin-top: 1rem; padding: 1rem; background: var(--bg-surface); border-radius: var(--radius-md); border: 1.5px solid var(--primary);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                        <strong style="color: var(--primary); font-size: 0.92rem;">Cargar Repuestos / Mano de Obra — Orden #{{ srv.id }}</strong>
+                        <strong style="color: var(--primary); font-size: 0.92rem;">Cargar Repuestos / Servicio Técnico — Orden #{{ srv.id }}</strong>
                         <button type="button" class="btn btn-secondary btn-sm" data-toggle-srv="panelRepuestosSrv{{ srv.id }}">Cerrar</button>
                     </div>
 
@@ -256,17 +256,17 @@
                             <button type="button" class="btn btn-secondary btn-sm srv-btn-add">+ Agregar otro repuesto</button>
                         </div>
 
-                        <!-- Sección Opcional de Mano de Obra -->
+                        <!-- Sección Opcional de Servicio Técnico -->
                         <div class="form-grid cols-2" style="margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--slate-200);">
                             <div class="form-group">
-                                <label>Costo Mano de Obra (Q) — Opcional</label>
+                                <label>Costo Servicio Técnico (Q) — Opcional</label>
                                 <div class="currency-wrapper">
                                     <span class="currency-prefix">Q</span>
                                     <input type="number" name="costo_mano_obra" class="form-control srv-input-mano-obra" step="0.01" min="0" value="{{ srv.costo_mano_obra|stringformat:'.2f' }}" placeholder="0.00">
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Descripción del trabajo / Mano de obra</label>
+                                <label>Descripción del trabajo / Servicio técnico</label>
                                 <input type="text" name="detalle_mano_obra" class="form-control" value="{{ srv.detalle_mano_obra|default_if_none:'' }}" placeholder="Ej. Soldadura, vacío y carga de gas R134a">
                             </div>
                         </div>

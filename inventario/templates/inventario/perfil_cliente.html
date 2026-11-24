@@ -126,6 +126,9 @@
                         <span class="badge {% if srv.estado == 'completado' %}badge-success{% elif srv.estado == 'en_proceso' %}badge-info{% elif srv.estado == 'cancelado' %}badge-danger{% else %}badge-warm{% endif %}">
                             {{ srv.get_estado_display }}
                         </span>
+                        {% if srv.total_reparacion > 0 %}
+                        <span class="badge badge-info">Total: Q {{ srv.total_reparacion|floatformat:2 }}</span>
+                        {% endif %}
                     </div>
                     <p style="font-size: 0.88rem; color: var(--slate-700); margin-top: 0.45rem; background: var(--bg-surface); padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--slate-200);">
                         <strong>Falla:</strong> {{ srv.descripcion_falla }}
@@ -178,11 +181,11 @@
                 </div>
             </div>
 
-            <!-- Repuestos ya utilizados en esta orden (vinculados a DescargaInventario) -->
-            {% if srv.descargas_repuestos.all %}
+            <!-- Desglose de Repuestos y Servicio Técnico aplicados -->
+            {% if srv.descargas_repuestos.all or srv.costo_mano_obra > 0 %}
             <div style="margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px dashed var(--slate-200);">
                 <div style="font-size: 0.78rem; font-weight: 700; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.45rem;">
-                    Repuestos utilizados (Descontados de inventario):
+                    Repuestos y servicio técnico aplicados:
                 </div>
                 <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.88rem;">
                     {% for desc in srv.descargas_repuestos.all %}
@@ -196,6 +199,16 @@
                         </li>
                         {% endfor %}
                     {% endfor %}
+
+                    {% if srv.costo_mano_obra > 0 %}
+                    <li style="display: flex; justify-content: space-between; align-items: center; background: var(--primary-light); padding: 0.48rem 0.75rem; border-radius: 8px; border: 1px solid #bae6fd;">
+                        <span>
+                            <strong>Servicio técnico especializado</strong>
+                            {% if srv.detalle_mano_obra %}<small style="color: var(--slate-700);">— {{ srv.detalle_mano_obra }}</small>{% endif %}
+                        </span>
+                        <strong style="color: var(--primary-hover);">Q {{ srv.costo_mano_obra }}</strong>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
             {% endif %}

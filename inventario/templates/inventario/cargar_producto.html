@@ -77,9 +77,13 @@
             <div class="form-group">
                 <label>Fotografía del repuesto</label>
                 <div class="photo-upload-box" id="photoDropzone">
-                    <input type="file" id="fotoInput" name="foto" accept="image/*">                    
+                    <!-- Input principal que se envía en el POST (sin capture para galería / archivos) -->
+                    <input type="file" id="fotoInput" name="foto" accept="image/*">
+                    <!-- Input auxiliar exclusivo para abrir la cámara trasera en móviles -->
+                    <input type="file" id="fotoCamaraInput" accept="image/*" capture="environment" style="display: none;">
+                    
                     <!-- Estado inicial sin foto -->
-                    <div id="photoPlaceholder">
+                    <div id="photoPlaceholder" style="position: relative; z-index: 2;">
                         <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--primary-light); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.45rem;">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -87,9 +91,30 @@
                                 <polyline points="21 15 16 10 5 21"></polyline>
                             </svg>
                         </div>
-                        <p style="font-size: 0.9rem; color: var(--dark-navy); font-weight: 600;">
-                            Toca para tomar foto o subir imagen
+                        <p style="font-size: 0.88rem; color: var(--dark-navy); font-weight: 600; margin-bottom: 0.65rem;">
+                            Selecciona cómo deseas cargar la imagen
                         </p>
+
+                        <!-- Dos botones separados: Cámara vs. Galería -->
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.55rem; margin-bottom: 0.45rem;">
+                            <button type="button" id="btnAbrirCamara" class="btn btn-primary btn-sm" style="min-height: 36px; padding: 0 0.85rem;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                                <span>Tomar foto</span>
+                            </button>
+
+                            <button type="button" id="btnAbrirGaleria" class="btn btn-secondary btn-sm" style="min-height: 36px; padding: 0 0.85rem;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <span>Galería / Archivos</span>
+                            </button>
+                        </div>
+
                         <small style="color: var(--slate-400);">JPG, PNG o WEBP</small>
                     </div>
 
@@ -371,4 +396,5 @@
         </div>
     </div>
 </div>
+
 {% endblock %}

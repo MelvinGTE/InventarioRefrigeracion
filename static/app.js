@@ -1,13 +1,45 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // =========================================================
-    // 1. VISTA PREVIA DE FOTO (Cargar / Editar Producto)
+    // =========================================================
+    // 1. VISTA PREVIA DE FOTO (Cargar / Editar Producto: Cámara y Galería)
     // =========================================================
     const fotoInput = document.getElementById('fotoInput');
+    const fotoCamaraInput = document.getElementById('fotoCamaraInput');
+    const btnAbrirCamara = document.getElementById('btnAbrirCamara');
+    const btnAbrirGaleria = document.getElementById('btnAbrirGaleria');
     const fotoPreview = document.getElementById('fotoPreview');
     const photoPlaceholder = document.getElementById('photoPlaceholder');
     const photoPreviewContainer = document.getElementById('photoPreviewContainer');
     const fotoFileName = document.getElementById('fotoFileName');
     const btnQuitarFoto = document.getElementById('btnQuitarFoto');
+    const eliminarFotoCheck = document.getElementById('eliminarFotoCheck');
+
+    if (btnAbrirCamara && fotoCamaraInput) {
+        btnAbrirCamara.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fotoCamaraInput.value = '';
+            fotoCamaraInput.click();
+        });
+    }
+
+    if (btnAbrirGaleria && fotoInput) {
+        btnAbrirGaleria.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fotoInput.click();
+        });
+    }
+
+    if (fotoCamaraInput && fotoInput) {
+        fotoCamaraInput.addEventListener('change', () => {
+            if (fotoCamaraInput.files && fotoCamaraInput.files.length > 0) {
+                const dt = new DataTransfer();
+                dt.items.add(fotoCamaraInput.files[0]);
+                fotoInput.files = dt.files;
+                fotoInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    }
 
     if (fotoInput && fotoPreview) {
         fotoInput.addEventListener('change', (e) => {
@@ -18,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (photoPlaceholder) photoPlaceholder.classList.add('hidden');
                 if (photoPreviewContainer) photoPreviewContainer.classList.remove('hidden');
                 if (fotoFileName) fotoFileName.textContent = file.name;
+                if (eliminarFotoCheck) eliminarFotoCheck.checked = false;
             }
         });
 
@@ -26,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 e.stopPropagation();
                 fotoInput.value = '';
+                if (fotoCamaraInput) fotoCamaraInput.value = '';
                 fotoPreview.src = '';
                 if (photoPreviewContainer) photoPreviewContainer.classList.add('hidden');
                 if (photoPlaceholder) photoPlaceholder.classList.remove('hidden');
@@ -153,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-   // =========================================================
+    // =========================================================
     // 3. COTIZACIONES PDF (Buscador, Subtotales y Filas)
     // =========================================================
     const listaCotizacion = document.getElementById('listaCotizacion');
@@ -218,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     stockHint.style.color = stock > 0 ? 'var(--primary)' : 'var(--warning)';
                 } else {
                     hiddenId.value = '';
-                    stockHint.textContent = texto ? 'Ítem personalizado / servicio' : '';
+                    stockHint.textContent = texto ? 'Servicio técnico / ítem personalizado' : '';
                     stockHint.style.color = 'var(--slate-600)';
                 }
             }
@@ -318,7 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const targetPanel = document.getElementById(targetId);
             if (!targetPanel) return;
 
-            // Cerrar otros paneles abiertos para mantener limpia la pantalla
             ['panelNuevoCliente', 'panelNuevaOrden'].forEach((id) => {
                 if (id !== targetId) {
                     const other = document.getElementById(id);
@@ -335,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================
-    // 6. CARGA DE REPUESTOS Y MANO DE OBRA EN SERVICIO TÉCNICO
+    // 6. CARGA DE REPUESTOS Y SERVICIO TÉCNICO EN ÓRDENES
     // =========================================================
     document.querySelectorAll('[data-toggle-srv]').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -391,8 +424,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            const manoObra = inputManoObra ? (parseFloat((inputManoObra.value || '0').replace(',', '.')) || 0) : 0;
-            totalDisplay.textContent = `Q ${(total + manoObra).toFixed(2)}`;
+            const servicioTecnico = inputManoObra ? (parseFloat((inputManoObra.value || '0').replace(',', '.')) || 0) : 0;
+            totalDisplay.textContent = `Q ${(total + servicioTecnico).toFixed(2)}`;
         };
 
         lista.addEventListener('input', recalcularOrden);
@@ -420,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Permite guardar solo mano de obra, solo repuestos, o ambos (pero evita texto inválido en repuesto)
+        // Permite guardar solo servicio técnico, solo repuestos, o ambos
         form.addEventListener('submit', (e) => {
             let valido = true;
             lista.querySelectorAll('.srv-item-row').forEach((row) => {
@@ -433,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (!valido) {
                 e.preventDefault();
-                alert('Selecciona un repuesto válido de la lista o deja el campo vacío si solo cobrarás mano de obra.');
+                alert('Selecciona un repuesto válido de la lista o deja el campo vacío si solo cobrarás servicio técnico.');
             }
         });
     });
@@ -488,7 +521,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
-
 
     // =========================================================
     // 8. PESTAÑAS (TABS) Y MODALES FLOTANTES
@@ -547,7 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-       // =========================================================
+    // =========================================================
     // 9. VALIDACIÓN TELÉFONO 8 DÍGITOS Y MODAL EDITAR CLIENTE
     // =========================================================
     document.querySelectorAll('.input-telefono-8').forEach((input) => {
@@ -609,7 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     hiddenProd.value = '';
                     if (hiddenTipo) hiddenTipo.value = 'mano_obra';
-                    hint.textContent = texto ? 'Servicio / Ítem personalizado' : '';
+                    hint.textContent = texto ? 'Servicio técnico especializado' : '';
                     hint.style.color = 'var(--slate-600)';
                 }
 
@@ -620,10 +652,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 total += sub;
             });
 
-            const manoObra = inputManoObraCot
+            const servicioTecnicoBase = inputManoObraCot
                 ? (parseFloat((inputManoObraCot.value || '0').replace(',', '.')) || 0)
                 : 0;
-            total += manoObra;
+            total += servicioTecnicoBase;
 
             if (totalOrdenCot) {
                 totalOrdenCot.textContent = `Q ${total.toFixed(2)}`;
@@ -665,7 +697,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         recalcularOrdenCot();
     }
-
 
     // =========================================================
     // 11. VISOR DE ZOOM PARA FOTOGRAFÍAS DE REPUESTOS

@@ -61,30 +61,57 @@
 
             <div class="form-group">
                 <label>Fotografía del repuesto</label>
-                <div class="photo-upload-box">
-                    
+                <div class="photo-upload-box" id="photoDropzone">
+                    <!-- Input principal que se envía en el POST (galería / archivos) -->
                     <input type="file" id="fotoInput" name="foto" accept="image/*">
-                    <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--primary-light); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.35rem;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                            <polyline points="21 15 16 10 5 21"></polyline>
-                        </svg>
+                    <!-- Input auxiliar exclusivo para abrir la cámara trasera en móviles -->
+                    <input type="file" id="fotoCamaraInput" accept="image/*" capture="environment" style="display: none;">
+
+                    <div style="position: relative; z-index: 2;">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--primary-light); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.35rem;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                        </div>
+                        <p style="font-size: 0.88rem; color: var(--dark-navy); font-weight: 600; margin-bottom: 0.65rem;">
+                            Selecciona cómo deseas actualizar la imagen
+                        </p>
+
+                        <!-- Dos botones separados: Cámara vs. Galería -->
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.55rem; margin-bottom: 0.45rem;">
+                            <button type="button" id="btnAbrirCamara" class="btn btn-primary btn-sm" style="min-height: 36px; padding: 0 0.85rem;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                                <span>Tomar foto</span>
+                            </button>
+
+                            <button type="button" id="btnAbrirGaleria" class="btn btn-secondary btn-sm" style="min-height: 36px; padding: 0 0.85rem;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <span>Galería / Archivos</span>
+                            </button>
+                        </div>
+
+                        <small style="color: var(--slate-400);">JPG, PNG o WEBP</small>
+
+                        {% if producto.foto %}
+                            <img id="fotoPreview" src="{{ producto.foto.url }}" class="photo-preview" style="display: block; max-height: 150px; margin: 0.75rem auto 0;" alt="{{ producto.nombre }}">
+                        {% else %}
+                            <img id="fotoPreview" class="photo-preview" style="max-height: 150px; margin: 0.75rem auto 0;" alt="Vista previa">
+                        {% endif %}
                     </div>
-                    <p style="font-size: 0.9rem; color: var(--dark-navy); font-weight: 600;">
-                        Toca para cambiar la foto o tomar una nueva
-                    </p>
-                    <small style="color: var(--slate-400);">JPG, PNG o WEBP</small>
-                    {% if producto.foto %}
-                        <img id="fotoPreview" src="{{ producto.foto.url }}" class="photo-preview" style="display: block; margin-top: 0.75rem;" alt="{{ producto.nombre }}">
-                    {% else %}
-                        <img id="fotoPreview" class="photo-preview" alt="Vista previa">
-                    {% endif %}
                 </div>
 
                 {% if producto.foto %}
                 <label class="checkbox-container" style="margin-top: 0.65rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--danger); font-weight: 600; cursor: pointer;">
-                    <input type="checkbox" name="eliminar_foto">
+                    <input type="checkbox" name="eliminar_foto" id="eliminarFotoCheck">
                     <span>Eliminar fotografía actual</span>
                 </label>
                 {% endif %}

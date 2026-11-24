@@ -582,6 +582,17 @@ textarea.form-control {
     inset: 0;
     opacity: 0;
     cursor: pointer;
+    z-index: 1;
+}
+
+.photo-action-buttons {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.55rem;
+    margin-bottom: 0.45rem;
 }
 
 .photo-preview {
