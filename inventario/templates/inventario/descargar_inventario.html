@@ -296,7 +296,7 @@
 
                 <!-- Desglose económico completo de la orden -->
                 <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.5rem;">
-                    Repuestos y Mano de Obra de esta Orden
+                    Repuestos y servicio técnico de esta Orden
                 </div>
                 <div class="table-responsive" style="margin-bottom: 1rem;">
                     <table style="font-size: 0.86rem;">
@@ -319,7 +319,7 @@
                             {% endfor %}
                             {% if srv.costo_mano_obra > 0 %}
                             <tr style="background: var(--primary-light);">
-                                <td colspan="2"><strong>Mano de obra técnica</strong></td>
+                                <td colspan="2"><strong>servicio técnico</strong></td>
                                 <td style="text-align: right;"><strong>Q {{ srv.costo_mano_obra }}</strong></td>
                             </tr>
                             {% endif %}
@@ -408,7 +408,7 @@
                             {% if cot.costo_mano_obra > 0 %}
                             <tr style="background: var(--primary-light);">
                                 <td style="text-align: center;"><strong>1</strong></td>
-                                <td><strong>Mano de obra técnica / Servicio de reparación</strong></td>
+                                <td><strong>servicio técnico / Servicio de reparación</strong></td>
                                 <td style="text-align: right;">Q {{ cot.costo_mano_obra|floatformat:2 }}</td>
                                 <td style="text-align: right;"><strong>Q {{ cot.costo_mano_obra|floatformat:2 }}</strong></td>
                             </tr>
@@ -478,7 +478,7 @@
                 </div>
 
                 <div style="font-size: 0.8rem; font-weight: 700; color: var(--slate-700); text-transform: uppercase; margin-bottom: 0.5rem;">
-                    3. Desglose de Repuestos Utilizados y Mano de Obra
+                    3. Desglose de Repuestos Utilizados y Servicio Técnico
                 </div>
                 <div class="table-responsive" style="margin-bottom: 1rem;">
                     <table style="font-size: 0.86rem;">
@@ -504,7 +504,7 @@
                             {% if srv.costo_mano_obra > 0 %}
                             <tr style="background: var(--primary-light);">
                                 <td style="text-align: center;"><strong>1</strong></td>
-                                <td><strong>Mano de obra técnica</strong></td>
+                                <td><strong>Servicio técnico</strong></td>
                                 <td style="text-align: right;">Q {{ srv.costo_mano_obra|floatformat:2 }}</td>
                                 <td style="text-align: right;"><strong>Q {{ srv.costo_mano_obra|floatformat:2 }}</strong></td>
                             </tr>

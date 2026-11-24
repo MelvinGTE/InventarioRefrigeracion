@@ -607,7 +607,7 @@ def construir_pdf_cotizacion(cotizacion):
     if cotizacion.costo_mano_obra > 0:
         filas_tabla.append([
             "1",
-            Paragraph("<b>Mano de obra técnica</b> — Servicio especializado de climatización", body_style),
+            Paragraph("<b>Servicio técnico especializado</b> — Climatización y refrigeración", body_style),
             f"Q {cotizacion.costo_mano_obra:,.2f}",
             f"Q {cotizacion.costo_mano_obra:,.2f}"
         ])
@@ -880,7 +880,7 @@ def cargar_repuestos_servicio(request, servicio_id):
 
         costo_mano_obra = Decimal(mano_obra_str) if mano_obra_str else Decimal('0.00')
         if costo_mano_obra < 0:
-            messages.error(request, 'El costo de mano de obra no puede ser negativo.')
+            messages.error(request, 'El costo del servicio técnico no puede ser negativo.')
             return redirect(request.META.get('HTTP_REFERER', 'clientes'))
 
         try:
@@ -894,7 +894,7 @@ def cargar_repuestos_servicio(request, servicio_id):
                         items_validos.append((prod_id, cant))
 
                 if not items_validos and costo_mano_obra == 0 and not detalle_mano_obra:
-                    raise ValueError('Agrega al menos un repuesto o ingresa un costo de mano de obra.')
+                    raise ValueError('Agrega al menos un repuesto o ingresa un costo de servicio técnico.')
 
                 total_repuestos = Decimal('0.00')
                 descarga = None
@@ -938,7 +938,7 @@ def cargar_repuestos_servicio(request, servicio_id):
 
             messages.success(
                 request,
-                f'Orden #{servicio.id} actualizada (Repuestos: Q {total_repuestos:,.2f} • Mano de obra: Q {servicio.costo_mano_obra:,.2f}).'
+                f'Orden #{servicio.id} actualizada (Repuestos: Q {total_repuestos:,.2f} • Servicio técnico: Q {servicio.costo_mano_obra:,.2f}).'
             )
 
         except ValueError as e:
@@ -1115,8 +1115,8 @@ def descargar_constancia_servicio_pdf(request, servicio_id):
     elements.append(bloque_trabajo)
     elements.append(Spacer(1, 14))
 
-    # 4. Tabla de Repuestos Instalados y Mano de Obra
-    elements.append(Paragraph("3. DESGLOSE DE REPUESTOS UTILIZADOS Y MANO DE OBRA", label_style))
+    # 4. Tabla de Repuestos Instalados y Servicio Técnico
+    elements.append(Paragraph("3. DESGLOSE DE REPUESTOS UTILIZADOS Y SERVICIO TÉCNICO", label_style))
     elements.append(Spacer(1, 5))
 
     filas_costos = [['CANT.', 'CONCEPTO / REPUESTO INSTALADO', 'PRECIO UNIT.', 'SUBTOTAL']]
@@ -1137,7 +1137,7 @@ def descargar_constancia_servicio_pdf(request, servicio_id):
 
     if servicio.costo_mano_obra > 0:
         tiene_items = True
-        desc_mo = f"<b>Mano de obra técnica</b> ({servicio.detalle_mano_obra})" if servicio.detalle_mano_obra else "<b>Mano de obra técnica</b>"
+        desc_mo = f"<b>Servicio técnico especializado</b> ({servicio.detalle_mano_obra})" if servicio.detalle_mano_obra else "<b>Servicio técnico especializado</b>"
         filas_costos.append([
             "1",
             Paragraph(desc_mo, body_style),
@@ -1146,7 +1146,7 @@ def descargar_constancia_servicio_pdf(request, servicio_id):
         ])
 
     if not tiene_items:
-        filas_costos.append(['-', 'Sin cargos de repuestos ni mano de obra registrados.', 'Q 0.00', 'Q 0.00'])
+        filas_costos.append(['-', 'Sin cargos de repuestos ni servicio técnico registrados.', 'Q 0.00', 'Q 0.00'])
 
     # Columna 1 recibe el texto y se combina (SPAN) con la columna 2
     filas_costos.append(['', 'TOTAL SERVICIO:', '', f"Q {servicio.total_reparacion:,.2f}"])
@@ -1235,7 +1235,7 @@ def cotizar_orden_servicio(request, servicio_id):
 
         try:
             if costo_mano_obra < 0:
-                raise ValueError('El costo de mano de obra no puede ser negativo.')
+                raise ValueError('El costo del servicio técnico no puede ser negativo.')
 
             with transaction.atomic():
                 if not cotizacion:
@@ -1283,7 +1283,7 @@ def cotizar_orden_servicio(request, servicio_id):
                     items_guardados += 1
 
                 if items_guardados == 0 and costo_mano_obra == 0:
-                    raise ValueError('Agrega al menos un repuesto o un costo de mano de obra a la cotización.')
+                    raise ValueError('Agrega al menos un repuesto o un costo de servicio técnico a la cotización.')
 
                 cotizacion.total = total_repuestos + costo_mano_obra
                 cotizacion.save()
